@@ -170,7 +170,6 @@ GroovyBox/
 
  本项目为[ Flutter 版 GroovyBox](https://github.com/Solsynth/GroovyBox) 的重构版，本项目的品质、存在的问题，与原开发者 NightSystem 和 [LittleSheep2Code](https://github.com/LittleSheep2Code) 无关，特此声明。
  
-注意：目前版本在移动端无法使用，因为媒体播放库存在缺陷。
 
 ## 📖 项目历史
 
