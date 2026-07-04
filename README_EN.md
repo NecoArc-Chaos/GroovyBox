@@ -168,7 +168,6 @@ This project is open-sourced under the [GNU General Public License v3.0](LICENSE
 
 This project is a refactored version of the [Flutter version GroovyBox](https://github.com/Solsynth/GroovyBox). The quality and issues of this project are not related to the original developers NightSystem and [LittleSheep2Code](https://github.com/LittleSheep2Code). This is hereby declared.
 
-Note: The current version cannot be used on mobile devices due to defects in the media playback library.
 
 ## 📖 Project History
 
