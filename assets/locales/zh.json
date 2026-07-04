@@ -237,5 +237,13 @@
   "repairLibrary": "修复曲库",
   "repairLibraryDescription": "扫描并移除文件已无法访问的曲目。",
   "repairLibraryDone": "修复完成：已移除 {0} 首缺失的曲目。",
-  "noMissingTracks": "✓ 没有缺失的曲目"
+  "noMissingTracks": "✓ 没有缺失的曲目",
+  "closeBehavior": "关闭行为",
+  "closeBehaviorAsk": "每次都询问",
+  "closeBehaviorExit": "直接退出",
+  "closeBehaviorHide": "隐藏到托盘",
+  "closeConfirmTitle": "确认关闭",
+  "closeConfirmMessage": "您要退出程序还是隐藏到系统托盘？",
+  "closeConfirmExit": "退出",
+  "closeConfirmHide": "隐藏到托盘"
 }

@@ -5,6 +5,7 @@ application lifecycle. It manages routing, theme configuration, audio playback
 callbacks, and UI synchronization between screens.
 """
 
+import asyncio
 import json
 from typing import List, Optional
 import flet as ft
@@ -14,6 +15,8 @@ from data import db
 from data import track_repository as trepo
 from logic.metadata_service import get_metadata
 from logic.key_bindings import DEFAULT_KEY_BINDINGS
+from logic.tray_manager import SystemTrayManager
+import os
 
 
 class GroovyBoxApp:
@@ -91,8 +94,25 @@ class GroovyBoxApp:
         except Exception:
             pass
 
+        # System tray and close behavior (desktop only)
+        self._tray_manager = None
+        self._tray_pending_show = False
+        self._tray_pending_exit = False
+        try:
+            page.window.prevent_close = True
+        except Exception:
+            logger.warning("prevent_close not supported")
+        try:
+            page.window.on_event = self._on_window_event
+        except Exception:
+            try:
+                page.on_window_event = self._on_window_event
+            except Exception:
+                logger.warning("window.on_event not supported")
+
         # Navigate to the library screen as the initial view
         page.run_task(page.push_route, "/library")
+        page.run_task(self._tray_watch)
         self._set_window_icon()
 
     def _set_window_icon(self):
@@ -105,6 +125,115 @@ class GroovyBoxApp:
                 self.page.update()
         except Exception:
             pass
+
+    def _on_window_event(self, e):
+        evt_type = getattr(e, 'type', None) or getattr(e, 'name', None) or getattr(e, 'data', None) or ''
+        logger.info(f"window event: data={e.data}, type={getattr(e, 'type', None)}, name={getattr(e, 'name', None)}")
+        if "close" in str(evt_type).lower():
+            self._handle_close()
+
+    def _handle_close(self):
+        behavior = db.get_setting("close_behavior", "ask")
+        if behavior == "exit":
+            self._tray_pending_exit = True
+        elif behavior == "hide":
+            self._hide_to_tray()
+        else:
+            self._show_close_dialog()
+
+    def _show_close_dialog(self):
+        dlg = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(tr("closeConfirmTitle")),
+            content=ft.Text(tr("closeConfirmMessage")),
+            actions=[
+                ft.OutlinedButton(tr("closeConfirmHide"), on_click=lambda e: self._on_close_hide(dlg)),
+                ft.FilledButton(tr("closeConfirmExit"), on_click=lambda e: self._on_close_exit(dlg)),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        self.page.show_dialog(dlg)
+        self.page.update()
+
+    def _on_close_hide(self, dlg):
+        self.page.pop_dialog()
+        self._hide_to_tray()
+
+    def _on_close_exit(self, dlg):
+        self.page.pop_dialog()
+        self._tray_pending_exit = True
+
+    def _hide_to_tray(self):
+        icon_path = os.path.join(os.path.dirname(__file__), "assets", "images", "icon.png")
+        if not self._tray_manager:
+            self._tray_manager = SystemTrayManager(
+                icon_path=icon_path,
+                on_show_callback=self._on_tray_show,
+                on_exit_callback=self._on_tray_exit,
+            )
+        self._tray_manager.run()
+        self.page.window.visible = False
+        try:
+            self.page.window.skip_task_bar = True
+        except Exception:
+            pass
+        self.page.update()
+
+    def _show_from_tray(self):
+        if self._tray_manager:
+            self._tray_manager.stop()
+        try:
+            self.page.window.visible = True
+        except Exception:
+            return
+        try:
+            self.page.window.skip_task_bar = False
+        except Exception:
+            pass
+        try:
+            self.page.window.to_front()
+        except Exception:
+            try:
+                self.page.window_to_front()
+            except Exception:
+                pass
+        self.page.update()
+
+    def _really_close(self):
+        if self._tray_manager:
+            self._tray_manager.stop()
+        try:
+            self.page.window.prevent_close = False
+            self.page.window.destroy()
+        except Exception:
+            try:
+                self.page.window_destroy()
+            except Exception:
+                try:
+                    self.page.window.prevent_close = False
+                    self.page.window.close()
+                except Exception as ex:
+                    logger.error(f"really_close all attempts failed: {ex}")
+
+    def _on_tray_show(self):
+        self._tray_pending_show = True
+
+    def _on_tray_exit(self):
+        self._tray_pending_exit = True
+
+    async def _tray_watch(self):
+        while True:
+            try:
+                if self._tray_pending_exit:
+                    self._tray_pending_exit = False
+                    self._really_close()
+                    return
+                if self._tray_pending_show:
+                    self._tray_pending_show = False
+                    self._show_from_tray()
+                await asyncio.sleep(0.2)
+            except Exception:
+                return
 
     async def _check_missing_tracks_on_startup(self):
         missing = trepo.get_missing_tracks()

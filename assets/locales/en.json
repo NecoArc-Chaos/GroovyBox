@@ -236,5 +236,13 @@
   "repairLibrary": "Repair Library",
   "repairLibraryDescription": "Find and remove tracks whose files are no longer accessible.",
   "repairLibraryDone": "Repair complete: removed {0} missing track(s).",
-  "noMissingTracks": "✓ No missing tracks"
+  "noMissingTracks": "✓ No missing tracks",
+  "closeBehavior": "Close Behavior",
+  "closeBehaviorAsk": "Always ask",
+  "closeBehaviorExit": "Exit directly",
+  "closeBehaviorHide": "Hide to tray",
+  "closeConfirmTitle": "Confirm Close",
+  "closeConfirmMessage": "Do you want to exit or hide to system tray?",
+  "closeConfirmExit": "Exit",
+  "closeConfirmHide": "Hide to tray"
 }

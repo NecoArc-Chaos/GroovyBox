@@ -513,6 +513,22 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                             on_change=lambda e: (save_setting("global_bg_hidden", e.control.value), page.session.store.get("app") and page.session.store.get("app")._reload_ui()),
                         ),
                         _build_global_bg_ui(),
+                        ft.Column(
+                            visible=page.platform in (ft.PagePlatform.WINDOWS, ft.PagePlatform.LINUX, ft.PagePlatform.MACOS),
+                            controls=[
+                                ft.Divider(height=1),
+                                ft.Text(tr("closeBehavior"), size=14, weight=ft.FontWeight.BOLD),
+                                ft.RadioGroup(
+                                    content=ft.Column([
+                                        ft.Radio(value="ask", label=tr("closeBehaviorAsk")),
+                                        ft.Radio(value="exit", label=tr("closeBehaviorExit")),
+                                        ft.Radio(value="hide", label=tr("closeBehaviorHide")),
+                                    ]),
+                                    value=db.get_setting("close_behavior", "ask"),
+                                    on_change=lambda e: save_setting("close_behavior", e.control.value),
+                                ),
+                            ],
+                        ),
                     ],
                 ),
             ),
