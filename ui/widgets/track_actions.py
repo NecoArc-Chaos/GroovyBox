@@ -105,13 +105,13 @@ def show_edit_dialog(page, track, on_saved=None):
 def show_add_to_playlist(page, track):
     playlists = prepo.watch_all_playlists()
     if not playlists:
-        page.show_snack_bar(ft.SnackBar(ft.Text(tr("noPlaylistsAvailable"))))
+        page.show_dialog(ft.SnackBar(ft.Text(tr("noPlaylistsAvailable"))))
         return
 
     def pick_pl(e, pl):
         prepo.add_to_playlist(pl.id, track.id)
         page.pop_dialog()
-        page.show_snack_bar(ft.SnackBar(ft.Text(tr("addedToPlaylist").replace("{}", pl.name))))
+        page.show_dialog(ft.SnackBar(ft.Text(tr("addedToPlaylist").replace("{}", pl.name))))
 
     dlg = ft.BottomSheet(
         content=ft.Column(

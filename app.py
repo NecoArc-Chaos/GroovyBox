@@ -240,7 +240,7 @@ class GroovyBoxApp:
                 content=ft.Text(msg),
                 actions=[
                     ft.TextButton(tr("ignore"), on_click=lambda e: self.page.pop_dialog()),
-                    ft.FilledButton(tr("removeAllMissing"), on_click=do_remove),
+                    ft.FilledButton(tr("removeAllMissing"), bgcolor=ft.Colors.RED, color=ft.Colors.WHITE, on_click=do_remove),
                 ],
             )
             self.page.show_dialog(dlg)

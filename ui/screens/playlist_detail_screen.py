@@ -34,6 +34,7 @@ class PlaylistDetailView(ft.Container):
         self._selecting = False
         self._selected_ids = set()
         self._sel_bar_count = None
+        self._is_mobile = page.width < 600
         self._build()
 
     def _get_app(self):
@@ -70,17 +71,33 @@ class PlaylistDetailView(ft.Container):
                 ),
                 # Action buttons
                 ft.Container(
-                    padding=ft.Padding(16, 0, 16, 0),
+                    padding=ft.Padding(12 if self._is_mobile else 16, 0, 12 if self._is_mobile else 16, 0),
                     content=ft.Row(
                         tight=True,
                         alignment=ft.MainAxisAlignment.CENTER,
+                        wrap=True,
                         controls=[
-                            ft.FilledButton(tr("playAll"), icon=ft.Icons.PLAY_ARROW, on_click=lambda e: self._play_all()),
-                            ft.Container(width=8),
-                            ft.OutlinedButton(tr("addToQueue"), icon=ft.Icons.QUEUE_MUSIC, on_click=lambda e: self._add_to_queue(self._tracks)),
-                            ft.Container(width=8),
-                            ft.OutlinedButton(tr("export"), icon=ft.Icons.FILE_DOWNLOAD, on_click=lambda e: self._show_export_dialog()),
-                            ft.Container(width=8),
+                            ft.FilledButton(
+                                tr("playAll"),
+                                icon=ft.Icons.PLAY_ARROW,
+                                height=36 if self._is_mobile else None,
+                                on_click=lambda e: self._play_all(),
+                            ),
+                            ft.Container(width=6),
+                            ft.OutlinedButton(
+                                tr("addToQueue"),
+                                icon=ft.Icons.QUEUE_MUSIC,
+                                height=36 if self._is_mobile else None,
+                                on_click=lambda e: self._add_to_queue(self._tracks),
+                            ),
+                            ft.Container(width=6),
+                            ft.OutlinedButton(
+                                tr("export"),
+                                icon=ft.Icons.FILE_DOWNLOAD,
+                                height=36 if self._is_mobile else None,
+                                on_click=lambda e: self._show_export_dialog(),
+                            ),
+                            ft.Container(width=6),
                             ft.IconButton(
                                 icon=ft.Icons.CHECKLIST if not self._selecting else ft.Icons.CHECKLIST_RTL,
                                 icon_size=20,
@@ -99,7 +116,7 @@ class PlaylistDetailView(ft.Container):
                 # Track list
                 ft.Container(
                     expand=True,
-                    padding=ft.Padding(16, 0, 16, 0),
+                    padding=ft.Padding(12 if self._is_mobile else 16, 0, 12 if self._is_mobile else 16, 0),
                     content=self._track_list,
                 ),
             ],
@@ -124,7 +141,8 @@ class PlaylistDetailView(ft.Container):
                     ft.FilledButton(
                         tr("remove"),
                         icon=ft.Icons.REMOVE_CIRCLE_OUTLINE,
-                        color=ft.Colors.ON_ERROR,
+                        bgcolor=ft.Colors.RED,
+                        color=ft.Colors.WHITE,
                         on_click=self._remove_selected,
                     ),
                 ],
@@ -293,10 +311,10 @@ class PlaylistDetailView(ft.Container):
                     src_bytes=file_bytes,
                 )
                 if saved:
-                    self._page.show_snack_bar(ft.SnackBar(ft.Text(tr("exported").replace("{}", os.path.basename(saved)))))
+                    self._page.show_dialog(ft.SnackBar(ft.Text(tr("exported").replace("{}", os.path.basename(saved)))))
             except Exception as ex:
                 logger.error(f"Export failed: {ex}")
-                self._page.show_snack_bar(ft.SnackBar(ft.Text(tr("error", str(ex)))))
+                self._page.show_dialog(ft.SnackBar(ft.Text(tr("error", str(ex)))))
             finally:
                 try:
                     os.unlink(tmp_path)

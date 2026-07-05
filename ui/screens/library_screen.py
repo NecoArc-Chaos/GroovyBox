@@ -253,6 +253,8 @@ class LibraryScreen(ft.Column):
                             tr("removeAllMissing"),
                             on_click=do_remove_missing,
                             height=28,
+                            bgcolor=ft.Colors.RED,
+                            color=ft.Colors.WHITE,
                         ),
                     ],
                 ),
@@ -337,7 +339,7 @@ class LibraryScreen(ft.Column):
                 content=ft.Text(tr("confirmBatchDelete").replace("{}", str(len(self.selected_ids)))),
                 actions=[
                     ft.TextButton(tr("cancel"), on_click=confirm_no),
-                    ft.FilledButton(tr("delete"), color=ft.Colors.RED, on_click=confirm_yes),
+                    ft.FilledButton(tr("delete"), bgcolor=ft.Colors.RED, color=ft.Colors.WHITE, on_click=confirm_yes),
                 ],
             )
             self._page.show_dialog(dlg)
@@ -578,7 +580,7 @@ class LibraryScreen(ft.Column):
                 content=ft.Text(tr("confirmDeleteTrack").replace("{}", track.title or "")),
                 actions=[
                     ft.TextButton(tr("cancel"), on_click=confirm_no),
-                    ft.FilledButton(tr("delete"), color=ft.Colors.RED, on_click=confirm_yes),
+                    ft.FilledButton(tr("delete"), bgcolor=ft.Colors.RED, color=ft.Colors.WHITE, on_click=confirm_yes),
                 ],
             )
             self._page.show_dialog(dlg)
@@ -600,7 +602,7 @@ class LibraryScreen(ft.Column):
         """Show playlist selection for batch adding selected tracks."""
         playlists = prepo.watch_all_playlists()
         if not playlists:
-            self._page.show_snack_bar(ft.SnackBar(ft.Text(tr("noPlaylistsAvailable"))))
+            self._page.show_dialog(ft.SnackBar(ft.Text(tr("noPlaylistsAvailable"))))
             return
 
         def pick_pl(e, pl):

@@ -1137,7 +1137,7 @@ class PlayerScreen(ft.Container):
         """
         query = f"{track.artist or ''} {track.title or ''}".strip()
         if not query:
-            self._page.show_snack_bar(ft.SnackBar(ft.Text(tr("error").replace("{}", "No track info"))))
+            self._page.show_dialog(ft.SnackBar(ft.Text(tr("error").replace("{}", "No track info"))))
             return
         try:
             import urllib.request
@@ -1151,7 +1151,7 @@ class PlayerScreen(ft.Container):
                 safe = urllib.parse.quote(query)
                 url = f"https://music.163.com/api/search/get?type=1&s={safe}"
             if not url:
-                self._page.show_snack_bar(ft.SnackBar(ft.Text(tr("noLyricsAvailable"))))
+                self._page.show_dialog(ft.SnackBar(ft.Text(tr("noLyricsAvailable"))))
                 return
             req = urllib.request.Request(url, headers={"User-Agent": "GroovyBox/1.0"})
             with urllib.request.urlopen(req, timeout=10) as resp:
@@ -1181,12 +1181,12 @@ class PlayerScreen(ft.Container):
                     if queued.id == track.id:
                         queued.lyrics = json_str
                 self._rebuild()
-                self._page.show_snack_bar(ft.SnackBar(ft.Text(tr("importedLyricsLines").replace("{}", str(len(lyr_data.lines))).replace("{}", track.title or ""))))
+                self._page.show_dialog(ft.SnackBar(ft.Text(tr("importedLyricsLines").replace("{}", str(len(lyr_data.lines))).replace("{}", track.title or ""))))
             else:
-                self._page.show_snack_bar(ft.SnackBar(ft.Text(tr("noLyricsAvailable"))))
+                self._page.show_dialog(ft.SnackBar(ft.Text(tr("noLyricsAvailable"))))
         except Exception as ex:
             logger.error(f"Lyrics search failed: {ex}")
-            self._page.show_snack_bar(ft.SnackBar(ft.Text(tr("error").replace("{}", str(ex)))))
+            self._page.show_dialog(ft.SnackBar(ft.Text(tr("error").replace("{}", str(ex)))))
 
     def _clear_lyrics(self, track):
         """Remove lyrics from a track."""
@@ -1219,7 +1219,7 @@ class PlayerScreen(ft.Container):
             if queued.id == track.id:
                 queued.lyrics = json_str
         self._rebuild()
-        self._page.show_snack_bar(ft.SnackBar(ft.Text(tr("importedLyricsLines").replace("{}", str(len(ldata.lines))).replace("{}", track.title or ""))))
+        self._page.show_dialog(ft.SnackBar(ft.Text(tr("importedLyricsLines").replace("{}", str(len(ldata.lines))).replace("{}", track.title or ""))))
 
     # Curved lyrics constants
     _LY_HALF = 5          # Number of lines above/below center
