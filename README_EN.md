@@ -177,7 +177,7 @@ On August 11, 2025, NightSystem posted a request for help in sn (a community), h
 
 - [liang-work](https://github.com/liang-work)
 - [ZhiH](https://github.com/ZhiH2333)
-
+- [符跃 万界](https://qm.qq.com/q/vMovFQlrj2)(logo design)
 ---
 
 <p align="center">

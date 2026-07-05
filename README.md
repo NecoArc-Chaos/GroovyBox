@@ -180,6 +180,7 @@ GroovyBox/
   
   - [liang-work](https://github.com/liang-work)
   - [ZhiH](https://github.com/ZhiH2333)
+  - [符跃 万界](https://qm.qq.com/q/vMovFQlrj2)(图标设计)
 ---
 
 <p align="center">

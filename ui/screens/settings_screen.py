@@ -189,7 +189,7 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
             content=ft.Text(tr("confirmResetTrackDatabase")),
             actions=[
                 ft.TextButton("Cancel", on_click=confirm_no),
-                ft.FilledButton("Yes", on_click=confirm_yes, color=ft.Colors.RED),
+                ft.FilledButton("Yes", on_click=confirm_yes, bgcolor=ft.Colors.RED, color=ft.Colors.WHITE),
             ],
         )
         page.show_dialog(dlg)
@@ -220,7 +220,7 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
             content=ft.Text(tr("missingTracksFound").format(len(missing)) + "\n\n" + names),
             actions=[
                 ft.TextButton(tr("cancel"), on_click=confirm_no),
-                ft.FilledButton(tr("removeAllMissing"), on_click=confirm_yes),
+                ft.FilledButton(tr("removeAllMissing"), bgcolor=ft.Colors.RED, color=ft.Colors.WHITE, on_click=confirm_yes),
             ],
         )
         page.show_dialog(dlg)
@@ -660,6 +660,7 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                                 ft.Text("Contributors: ", size=12, color=ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE)),
                                 ft.TextButton("liang-work", url="https://github.com/liang-work"),
 								ft.TextButton("ZhiH", url="https://github.com/ZhiH2333"),
+								ft.TextButton("符跃 万界(logo)", url="https://qm.qq.com/q/vMovFQlrj2"),
                             ],
                         ),
                     ],
