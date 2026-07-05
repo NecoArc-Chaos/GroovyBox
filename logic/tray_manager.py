@@ -1,6 +1,11 @@
 import threading
-import pystray
-from PIL import Image
+
+try:
+    import pystray
+    from PIL import Image
+    _HAS_TRAY = True
+except ImportError:
+    _HAS_TRAY = False
 
 
 class SystemTrayManager:
@@ -8,6 +13,10 @@ class SystemTrayManager:
         self._icon = None
         self._on_show_callback = on_show_callback
         self._on_exit_callback = on_exit_callback
+        self._enabled = _HAS_TRAY
+
+        if not _HAS_TRAY:
+            return
 
         image = Image.open(icon_path)
 
@@ -25,16 +34,17 @@ class SystemTrayManager:
         )
 
     def run(self):
-        if self._icon and not self._icon.visible:
-            threading.Thread(target=self._icon.run, daemon=True).start()
+        if not self._enabled or not self._icon or self._icon.visible:
+            return
+        threading.Thread(target=self._icon.run, daemon=True).start()
 
     def stop(self):
-        if self._icon and self._icon.visible:
+        if self._enabled and self._icon and self._icon.visible:
             self._icon.stop()
 
     @property
     def is_running(self):
-        return self._icon is not None and self._icon.visible
+        return self._enabled and self._icon is not None and self._icon.visible
 
     def _on_open(self, icon, item):
         icon.visible = False

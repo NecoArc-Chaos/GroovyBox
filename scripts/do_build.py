@@ -8,6 +8,22 @@ options like Android signing and iOS provisioning.
 
 import json, subprocess, sys, os, shutil
 
+DESKTOP_PLATFORMS = ("windows", "linux", "macos")
+EXTRA_DESKTOP_DEPS = "# desktop-only dependencies\npystray>=0.19.0\n"
+
+
+def ensure_desktop_deps(plat: str):
+    """Inject desktop-only dependencies into requirements.txt for desktop builds."""
+    if plat not in DESKTOP_PLATFORMS:
+        return
+    req = "requirements.txt"
+    with open(req, encoding="utf-8") as f:
+        content = f.read()
+    if "pystray" not in content:
+        with open(req, "a", encoding="utf-8") as f:
+            f.write(f"\n{EXTRA_DESKTOP_DEPS}")
+        print(f"Injected desktop dependencies into {req}")
+
 
 def load_config():
     """Load the build configuration from build-config.json.
@@ -123,6 +139,7 @@ if __name__ == "__main__":
     platform = sys.argv[1] if len(sys.argv) > 1 else "windows"
     plat = os.environ.get("TARGET_PLATFORM", platform)
     copy_icons()
+    ensure_desktop_deps(plat)
     cmd = build_cmd(plat)
     print("Running:", " ".join(cmd))
     subprocess.run(cmd, check=True)
