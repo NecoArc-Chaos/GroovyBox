@@ -520,11 +520,10 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                                 ft.Text(tr("closeBehavior"), size=14, weight=ft.FontWeight.BOLD),
                                 ft.RadioGroup(
                                     content=ft.Column([
-                                        ft.Radio(value="ask", label=tr("closeBehaviorAsk")),
-                                        ft.Radio(value="exit", label=tr("closeBehaviorExit")),
                                         ft.Radio(value="hide", label=tr("closeBehaviorHide")),
+                                        ft.Radio(value="exit", label=tr("closeBehaviorExit")),
                                     ]),
-                                    value=db.get_setting("close_behavior", "ask"),
+                                    value="hide" if db.get_setting("close_behavior", "hide") not in ("hide", "exit") else db.get_setting("close_behavior", "hide"),
                                     on_change=lambda e: save_setting("close_behavior", e.control.value),
                                 ),
                             ],

@@ -98,6 +98,7 @@ class GroovyBoxApp:
         self._tray_manager = None
         self._tray_pending_show = False
         self._tray_pending_exit = False
+        self._is_closing = False
         try:
             page.window.prevent_close = True
         except Exception:
@@ -127,41 +128,18 @@ class GroovyBoxApp:
             pass
 
     def _on_window_event(self, e):
+        if self._is_closing:
+            return
         evt_type = getattr(e, 'type', None) or getattr(e, 'name', None) or getattr(e, 'data', None) or ''
-        logger.info(f"window event: data={e.data}, type={getattr(e, 'type', None)}, name={getattr(e, 'name', None)}")
         if "close" in str(evt_type).lower():
             self._handle_close()
 
     def _handle_close(self):
-        behavior = db.get_setting("close_behavior", "ask")
+        behavior = db.get_setting("close_behavior", "hide")
         if behavior == "exit":
             self._tray_pending_exit = True
-        elif behavior == "hide":
-            self._hide_to_tray()
         else:
-            self._show_close_dialog()
-
-    def _show_close_dialog(self):
-        dlg = ft.AlertDialog(
-            modal=True,
-            title=ft.Text(tr("closeConfirmTitle")),
-            content=ft.Text(tr("closeConfirmMessage")),
-            actions=[
-                ft.OutlinedButton(tr("closeConfirmHide"), on_click=lambda e: self._on_close_hide(dlg)),
-                ft.FilledButton(tr("closeConfirmExit"), on_click=lambda e: self._on_close_exit(dlg)),
-            ],
-            actions_alignment=ft.MainAxisAlignment.END,
-        )
-        self.page.show_dialog(dlg)
-        self.page.update()
-
-    def _on_close_hide(self, dlg):
-        self.page.pop_dialog()
-        self._hide_to_tray()
-
-    def _on_close_exit(self, dlg):
-        self.page.pop_dialog()
-        self._tray_pending_exit = True
+            self._hide_to_tray()
 
     def _hide_to_tray(self):
         icon_path = os.path.join(os.path.dirname(__file__), "assets", "images", "icon.png")
@@ -199,21 +177,19 @@ class GroovyBoxApp:
                 pass
         self.page.update()
 
-    def _really_close(self):
+    async def _really_close(self):
         if self._tray_manager:
             self._tray_manager.stop()
+        self._is_closing = True
+        self.page.window.prevent_close = False
         try:
-            self.page.window.prevent_close = False
-            self.page.window.destroy()
+            await self.page.window.destroy()
         except Exception:
             try:
-                self.page.window_destroy()
+                await self.page.window.close()
             except Exception:
-                try:
-                    self.page.window.prevent_close = False
-                    self.page.window.close()
-                except Exception as ex:
-                    logger.error(f"really_close all attempts failed: {ex}")
+                import os
+                os._exit(0)
 
     def _on_tray_show(self):
         self._tray_pending_show = True
@@ -226,7 +202,7 @@ class GroovyBoxApp:
             try:
                 if self._tray_pending_exit:
                     self._tray_pending_exit = False
-                    self._really_close()
+                    await self._really_close()
                     return
                 if self._tray_pending_show:
                     self._tray_pending_show = False
