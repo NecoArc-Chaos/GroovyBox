@@ -135,6 +135,7 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
         if app:
             app.theme_mode = mode_map.get(val, ft.ThemeMode.SYSTEM)
             app.page.theme_mode = app.theme_mode
+            app._set_window_icon()
             app.page.update()
 
     async def add_library(e):

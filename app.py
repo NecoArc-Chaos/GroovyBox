@@ -116,11 +116,23 @@ class GroovyBoxApp:
         page.run_task(self._tray_watch)
         self._set_window_icon()
 
-    def _set_window_icon(self):
-        """Set the application window icon from assets."""
+    def _is_dark_mode(self):
+        if self.theme_mode == ft.ThemeMode.DARK:
+            return True
+        if self.theme_mode == ft.ThemeMode.LIGHT:
+            return False
         try:
-            import os
-            icon_path = os.path.join(os.path.dirname(__file__), "assets", "images", "icon.ico")
+            return self.page.platform_brightness == ft.Brightness.DARK
+        except Exception:
+            return False
+
+    def _get_icon_suffix(self):
+        return "-dark" if self._is_dark_mode() else ""
+
+    def _set_window_icon(self):
+        try:
+            suffix = self._get_icon_suffix()
+            icon_path = os.path.join(os.path.dirname(__file__), "assets", "images", f"icon{suffix}.ico")
             if os.path.exists(icon_path):
                 self.page.window.icon = icon_path
                 self.page.update()
@@ -142,7 +154,8 @@ class GroovyBoxApp:
             self._hide_to_tray()
 
     def _hide_to_tray(self):
-        icon_path = os.path.join(os.path.dirname(__file__), "assets", "images", "icon.png")
+        suffix = self._get_icon_suffix()
+        icon_path = os.path.join(os.path.dirname(__file__), "assets", "images", f"icon{suffix}.png")
         if not self._tray_manager:
             self._tray_manager = SystemTrayManager(
                 icon_path=icon_path,
