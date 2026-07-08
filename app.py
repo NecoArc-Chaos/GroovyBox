@@ -7,6 +7,7 @@ callbacks, and UI synchronization between screens.
 
 import asyncio
 import json
+import time
 from typing import List, Optional
 import flet as ft
 from logic.logger import logger
@@ -99,6 +100,7 @@ class GroovyBoxApp:
         self._tray_pending_show = False
         self._tray_pending_exit = False
         self._is_closing = False
+        self._last_back_press = 0
         try:
             page.window.prevent_close = True
         except Exception:
@@ -538,15 +540,29 @@ class GroovyBoxApp:
             logger.warning(f"_on_global_keyboard failed: {ex}")
 
     async def _on_view_pop(self, e):
-        """Handle back navigation by popping the top view.
+        """Handle back navigation or prompt to exit on main page.
         
-        Args:
-            e: View pop event from the Flet framework.
+        Pops the top view if there are multiple views.
+        On mobile with a single view, shows "press again to exit" toast.
+        Desktop: no-op on single view.
         """
         if len(self.page.views) > 1:
             self.page.views.pop()
             top = self.page.views[-1]
             await self.page.push_route(top.route)
+        elif db.is_mobile():
+            now = time.time()
+            if now - self._last_back_press < 2:
+                try:
+                    await self.page.window.destroy()
+                except Exception:
+                    try:
+                        await self.page.window.close()
+                    except Exception:
+                        os._exit(0)
+            else:
+                self._last_back_press = now
+                self.page.show_dialog(ft.SnackBar(ft.Text(tr("pressBackAgainToExit"))))
 
     def _sync_views(self):
         """Synchronize the page views with the current route.

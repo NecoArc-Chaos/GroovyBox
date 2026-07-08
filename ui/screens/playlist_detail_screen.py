@@ -10,6 +10,7 @@ import os
 from data import playlist_repository as prepo
 from logic.localize import tr
 from logic.logger import logger
+from data import db
 from ui.widgets.track_tile import TrackTile
 
 
@@ -171,6 +172,19 @@ class PlaylistDetailView(ft.Container):
                         on_change=lambda e, tid=t.id: self._toggle_select(tid),
                     ),
                 )
+            elif db.is_mobile():
+                tid = t.id
+                tile = ft.Dismissible(
+                    content=tile,
+                    background=ft.Container(
+                        bgcolor=ft.Colors.RED,
+                        alignment=ft.Alignment(1, 0),
+                        padding=ft.Padding(0, 0, 16, 0),
+                        content=ft.Text(tr("delete"), color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD),
+                    ),
+                    dismiss_direction=ft.DismissDirection.END_TO_START,
+                    on_dismiss=lambda e, _tid=tid: self._remove_single_track(_tid),
+                )
             controls.append(tile)
         controls.append(ft.Container(height=80))
         return controls
@@ -197,6 +211,11 @@ class PlaylistDetailView(ft.Container):
             prepo.remove_from_playlist(self.playlist.id, tid)
         self._selected_ids.clear()
         self._selecting = False
+        self._build()
+        self.update()
+
+    def _remove_single_track(self, tid):
+        prepo.remove_from_playlist(self.playlist.id, tid)
         self._build()
         self.update()
 

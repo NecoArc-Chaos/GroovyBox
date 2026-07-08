@@ -244,5 +244,6 @@
   "closeConfirmTitle": "Confirm Close",
   "closeConfirmMessage": "Do you want to exit or hide to system tray?",
   "closeConfirmExit": "Exit",
-  "closeConfirmHide": "Hide to tray"
+  "closeConfirmHide": "Hide to tray",
+  "pressBackAgainToExit": "Press back again to exit"
 }

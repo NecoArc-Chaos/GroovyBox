@@ -32,6 +32,8 @@ class ShellView(ft.View):
         super().__init__(route="/", padding=0, spacing=0)
         self._page = page
         self.app = page.session.store.get("app")
+        self._is_mobile = page.width < 600
+        self._swipe_back_started = False
 
         # Main content area and mini player
         self.content_view = ft.Column(expand=True, spacing=0)
@@ -47,6 +49,21 @@ class ShellView(ft.View):
                 ft.Container(content=self.mini_player),
             ],
         )
+
+        # On mobile, wrap in a Stack with left-edge swipe-back detector
+        if self._is_mobile:
+            body = ft.Stack(
+                expand=True,
+                controls=[
+                    body,
+                    ft.GestureDetector(
+                        left=0, top=0, bottom=0, width=40,
+                        on_horizontal_drag_start=self._on_back_drag_start,
+                        on_horizontal_drag_update=self._on_back_drag_update,
+                        on_horizontal_drag_end=self._on_back_drag_end,
+                    ),
+                ],
+            )
 
         bg_wrapper = self._build_global_bg_wrapper(body)
         self.controls = [bg_wrapper] if bg_wrapper else [body]
@@ -71,6 +88,22 @@ class ShellView(ft.View):
                 content=body,
             ),
         )
+
+    def _go_back(self):
+        route = self._page.route
+        if route in ("/playlist", "/album", "/artist"):
+            self._page.run_task(self._page.push_route, "/library")
+
+    def _on_back_drag_start(self, e):
+        self._swipe_back_started = True
+
+    def _on_back_drag_update(self, e):
+        if self._swipe_back_started and e.delta_x > 100:
+            self._swipe_back_started = False
+            self._go_back()
+
+    def _on_back_drag_end(self, e):
+        self._swipe_back_started = False
 
     def refresh_mini_player(self):
         """Force a refresh of the mini player widget."""

@@ -245,5 +245,6 @@
   "closeConfirmTitle": "确认关闭",
   "closeConfirmMessage": "您要退出程序还是隐藏到系统托盘？",
   "closeConfirmExit": "退出",
-  "closeConfirmHide": "隐藏到托盘"
+  "closeConfirmHide": "隐藏到托盘",
+  "pressBackAgainToExit": "再按一次返回键退出"
 }

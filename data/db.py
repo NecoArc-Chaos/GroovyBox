@@ -37,10 +37,11 @@ _is_mobile = is_mobile
 
 
 def get_app_data_dir() -> str:
+    flet_dir = os.environ.get("FLET_APP_DATA_DIR")
+    if flet_dir:
+        return flet_dir
     if "ANDROID_ROOT" in os.environ:
         return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    if os.environ.get("FLET_APP_DATA_DIR"):
-        return os.environ["FLET_APP_DATA_DIR"]
     return os.path.expanduser("~")
 
 
