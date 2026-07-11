@@ -631,7 +631,7 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                         ft.Text(f"Build {_build_number}", size=11, color=ft.Colors.with_opacity(0.5, ft.Colors.ON_SURFACE)),
                         ft.Container(height=8),
                         ft.Text("GNU General Public License v3.0", size=12, color=ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE)),
-                        ft.Text("Copyright \u00A9 2026 luolingy(liang-work)", size=12, color=ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE)),
+                        ft.Text("Copyright \u00A9 2026 luolingy", size=12, color=ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE)),
                         ft.Container(height=8),
                         ft.Divider(height=1),
                         ft.Container(height=4),
@@ -643,12 +643,12 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                         ft.TextButton(
                             icon=ft.Icons.CODE,
                             content=ft.Text(tr("openSourceRepo"), size=13, weight=ft.FontWeight.W_500),
-                            url="https://github.com/liang-work/groovybox",
+                            url="https://github.com/luolingy/groovybox",
                         ),
                         ft.TextButton(
                             icon=ft.Icons.BUG_REPORT,
                             content=ft.Text(tr("feedback"), size=13, weight=ft.FontWeight.W_500),
-                            url="https://github.com/liang-work/groovybox/issues",
+                            url="https://github.com/luolingy/groovybox/issues",
                         ),
                         ft.Container(height=4),
                         ft.Divider(height=1),
@@ -658,7 +658,7 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                             alignment=ft.MainAxisAlignment.CENTER,
                             controls=[
                                 ft.Text("Contributors: ", size=12, color=ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE)),
-                                ft.TextButton("liang-work", url="https://github.com/liang-work"),
+                                ft.TextButton("luolingy", url="https://github.com/luolingy"),
 								ft.TextButton("ZhiH", url="https://github.com/ZhiH2333"),
 								ft.TextButton("符跃 万界(logo)", url="https://qm.qq.com/q/vMovFQlrj2"),
                             ],

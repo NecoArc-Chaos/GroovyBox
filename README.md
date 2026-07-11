@@ -178,7 +178,7 @@ GroovyBox/
 
 ## 👥 贡献者
   
-  - [liang-work](https://github.com/liang-work)
+  - [luolingy](https://github.com/luolingy)
   - [ZhiH](https://github.com/ZhiH2333)
   - [符跃 万界](https://qm.qq.com/q/vMovFQlrj2)(图标设计)
 ---
