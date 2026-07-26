@@ -1,15 +1,12 @@
-name: Release Build
+name: Build and Release
 
 on:
   push:
+    branches:
+      - '**'
     tags:
       - 'v*'
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version tag (e.g. v1.0.1test)'
-        required: true
-        default: 'v1.0.1test'
 
 env:
   FLET_VERSION: '0.85.3'
@@ -71,6 +68,8 @@ jobs:
           if-no-files-found: error
 
   release:
+    # Only run when a tag is pushed
+    if: startsWith(github.ref, 'refs/tags/')
     needs: build-all
     runs-on: ubuntu-latest
     permissions:
@@ -85,7 +84,6 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release-files
-          # Flatten artifacts into release-files/
           find release-artifacts -type f | while read f; do
             cp "$f" release-files/
           done
@@ -94,10 +92,10 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref_name || inputs.version }}
-          name: GroovyBox ${{ github.ref_name || inputs.version }}
+          tag_name: ${{ github.ref_name }}
+          name: GroovyBox ${{ github.ref_name }}
           body: |
-            Automated build for tag `${{ github.ref_name || inputs.version }}`.
+            Automated build for `${{ github.ref_name }}`.
             See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
           files: release-files/*
           draft: false
