@@ -57,6 +57,14 @@ jobs:
         timeout-minutes: 60
         env:
           PYTHONIOENCODING: utf-8
+          # Android signing (optional - unsigned if not provided)
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          # iOS signing (optional - unsigned if not provided)
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          IOS_SIGNING_CERTIFICATE: ${{ secrets.IOS_SIGNING_CERTIFICATE }}
+          IOS_PROVISIONING_PROFILE_NAME: ${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}
         run: python scripts/do_build.py ${{ matrix.platform }}
 
       - name: Upload artifact
