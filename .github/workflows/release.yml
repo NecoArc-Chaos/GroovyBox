@@ -1,0 +1,106 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. v1.0.1test)'
+        required: true
+        default: 'v1.0.1test'
+
+env:
+  FLET_VERSION: '0.85.3'
+
+jobs:
+  build-all:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            os: windows-latest
+            artifact: GroovyBox-Windows
+          - platform: linux
+            os: ubuntu-latest
+            artifact: GroovyBox-Linux
+          - platform: macos
+            os: macos-latest
+            artifact: GroovyBox-macOS
+          - platform: android
+            os: ubuntu-latest
+            artifact: GroovyBox-Android
+          - platform: ios
+            os: macos-latest
+            artifact: GroovyBox-iOS
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install flet==${{ env.FLET_VERSION }} flet-audio==${{ env.FLET_VERSION }}
+          pip install mutagen Pillow colorthief httpx
+
+      - name: Cache Flutter SDK
+        uses: actions/cache@v4
+        with:
+          path: ~/.flet/flutter
+          key: flutter-${{ env.FLET_VERSION }}
+
+      - name: Build (${{ matrix.platform }})
+        timeout-minutes: 60
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python scripts/do_build.py ${{ matrix.platform }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            build/${{ matrix.platform }}/**/*
+          if-no-files-found: error
+
+  release:
+    needs: build-all
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./release-artifacts
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release-files
+          # Flatten artifacts into release-files/
+          find release-artifacts -type f | while read f; do
+            cp "$f" release-files/
+          done
+          ls -la release-files/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name || inputs.version }}
+          name: GroovyBox ${{ github.ref_name || inputs.version }}
+          body: |
+            Automated build for tag `${{ github.ref_name || inputs.version }}`.
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+          files: release-files/*
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
