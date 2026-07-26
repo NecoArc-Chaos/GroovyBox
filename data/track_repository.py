@@ -7,14 +7,22 @@ scanning, and track management operations. Supports both synchronous
 """
 
 import asyncio
+import io
 import os
 import shutil
+from datetime import datetime
 from typing import List, Optional, Tuple
 import threading
 from data.db import get_connection, get_app_dir, is_mobile
 from logic.logger import logger
 from data.models import Track
 from logic.metadata_service import get_metadata, SUPPORTED_EXTENSIONS
+
+try:
+    from PIL import Image
+    _HAS_PIL = True
+except ImportError:
+    _HAS_PIL = False
 
 # Supported audio file extensions for import
 AUDIO_EXTENSIONS = {"mp3", "m4a", "wav", "flac", "aac", "ogg", "wma", "m4p", "aiff", "au", "dss"}
@@ -89,6 +97,28 @@ def _copy_to_music_dir(src: str) -> str:
     return src
 
 
+def _generate_art_thumb(art_bytes: bytes, size: int = 128) -> Optional[bytes]:
+    """Generate a JPEG thumbnail from raw album art bytes.
+    
+    Args:
+        art_bytes: Raw image bytes.
+        size: Maximum dimension for the thumbnail.
+    
+    Returns:
+        JPEG thumbnail bytes, or None if generation fails.
+    """
+    if not _HAS_PIL or not art_bytes:
+        return None
+    try:
+        img = Image.open(io.BytesIO(art_bytes))
+        img.thumbnail((size, size), Image.Resampling.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=85)
+        return buf.getvalue()
+    except Exception:
+        return None
+
+
 def _do_import(file_paths: List[str], conn, copy: bool = False) -> Tuple[int, List[str]]:
     existing = {
         r["path"] for r in conn.execute(
@@ -116,6 +146,7 @@ def _do_import(file_paths: List[str], conn, copy: bool = False) -> Tuple[int, Li
             final_path = _copy_to_music_dir(path) if should_copy else path
 
             art_path = None
+            art_thumb = None
             if meta.art_bytes:
                 art_name = f"{os.path.splitext(filename)[0]}_{imported}_art.jpg"
                 art_file = os.path.join(art_dir, art_name)
@@ -123,15 +154,16 @@ def _do_import(file_paths: List[str], conn, copy: bool = False) -> Tuple[int, Li
                     with open(art_file, "wb") as f:
                         f.write(meta.art_bytes)
                     art_path = art_file
+                    art_thumb = _generate_art_thumb(meta.art_bytes)
                 except Exception:
                     pass
 
             conn.execute(
                 """INSERT OR IGNORE INTO tracks
-                   (title, artist, album, duration, path, art_uri, lyrics_offset)
-                   VALUES (?, ?, ?, ?, ?, ?, 0)""",
+                   (title, artist, album, duration, path, art_uri, art_thumb, lyrics_offset)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, 0)""",
                 (title, meta.artist, meta.album,
-                 meta.duration, final_path, art_path),
+                 meta.duration, final_path, art_path, art_thumb),
             )
             conn.commit()
             imported += 1
@@ -241,15 +273,46 @@ def clear_all_tracks():
         conn.commit()
 
 
-def get_missing_tracks() -> List[Track]:
+def get_missing_tracks(since: Optional[str] = None) -> List[Track]:
+    """Find tracks whose files are missing on disk.
+    
+    Args:
+        since: Optional ISO timestamp. Only check tracks with
+               last_checked older than this value (or never checked).
+               Pass None for a full scan.
+    
+    Returns:
+        List of Track objects with missing files.
+    """
     missing: List[Track] = []
     with get_connection() as conn:
-        rows = conn.execute("SELECT * FROM tracks").fetchall()
+        if since:
+            rows = conn.execute(
+                "SELECT * FROM tracks WHERE last_checked IS NULL OR last_checked < ?",
+                (since,)
+            ).fetchall()
+        else:
+            rows = conn.execute("SELECT * FROM tracks").fetchall()
     for r in rows:
         track = _row_to_track(r)
         if not os.path.isfile(track.path):
             missing.append(track)
     return missing
+
+
+def update_last_checked_since(old_time: str, new_time: str):
+    """Update last_checked for all tracks checked since a given time.
+    
+    Args:
+        old_time: The previous check timestamp.
+        new_time: The new timestamp to set.
+    """
+    with get_connection() as conn:
+        conn.execute(
+            "UPDATE tracks SET last_checked = ? WHERE last_checked IS NULL OR last_checked < ?",
+            (new_time, old_time)
+        )
+        conn.commit()
 
 
 def delete_tracks(track_ids: List[int]):
@@ -282,6 +345,19 @@ def _row_to_track(row) -> Track:
     Returns:
         A Track instance with values from the row.
     """
+    art_uri = row["art_uri"]
+    art_thumb = row["art_thumb"]
+    # If art_uri file is missing but we have a cached thumbnail, restore it
+    if (not art_uri or not os.path.isfile(art_uri)) and art_thumb:
+        try:
+            art_dir = os.path.join(get_app_dir(), "art")
+            os.makedirs(art_dir, exist_ok=True)
+            restored_path = os.path.join(art_dir, f"thumb_{row['id']}.jpg")
+            with open(restored_path, "wb") as f:
+                f.write(art_thumb)
+            art_uri = restored_path
+        except Exception:
+            pass
     return Track(
         id=row["id"],
         title=row["title"],
@@ -289,8 +365,10 @@ def _row_to_track(row) -> Track:
         album=row["album"],
         duration=row["duration"],
         path=row["path"],
-        art_uri=row["art_uri"],
+        art_uri=art_uri,
+        art_thumb=art_thumb,
         lyrics=row["lyrics"],
         lyrics_offset=row["lyrics_offset"],
         added_at=row["added_at"],
+        last_checked=row["last_checked"],
     )

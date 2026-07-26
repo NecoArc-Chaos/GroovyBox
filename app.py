@@ -8,6 +8,7 @@ callbacks, and UI synchronization between screens.
 import asyncio
 import json
 import time
+from datetime import datetime
 from typing import List, Optional
 import flet as ft
 from logic.logger import logger
@@ -57,6 +58,12 @@ class GroovyBoxApp:
 
         # Store app reference in session for access from other components
         page.session.store.set("app", self)
+
+        # Initialize background watch folder scanner
+        from logic.watch_scanner import WatchScanner
+        self._watch_scanner = WatchScanner()
+        self._watch_scanner.set_loop(asyncio.get_running_loop())
+        self._watch_scanner.start()
 
         # Initialize audio player with flet_audio backend
         from logic.audio_handler import AudioPlayer
@@ -205,6 +212,9 @@ class GroovyBoxApp:
             except Exception:
                 import os
                 os._exit(0)
+        finally:
+            from data.db import close_thread_connection
+            close_thread_connection()
 
     def _on_tray_show(self):
         self._tray_pending_show = True
@@ -228,8 +238,13 @@ class GroovyBoxApp:
 
     async def _check_missing_tracks_on_startup(self):
         loop = asyncio.get_running_loop()
-        missing = await loop.run_in_executor(None, trepo.get_missing_tracks)
+        last_check = db.get_setting("last_missing_check", "")
+        check_time = datetime.now().isoformat()
+        missing = await loop.run_in_executor(None, trepo.get_missing_tracks, last_check or None)
         self._missing_count = len(missing)
+        # Mark checked tracks regardless of missing status
+        await loop.run_in_executor(None, trepo.update_last_checked_since, last_check, check_time)
+        db.set_setting("last_missing_check", check_time)
         if self._missing_count > 0:
             logger.warning(f"Found {self._missing_count} missing track(s) on startup")
             msg = tr("missingTracksFound").format(self._missing_count)
@@ -261,6 +276,22 @@ class GroovyBoxApp:
         """Load the user's preferred language from settings."""
         lang = db.get_setting("language", "en")
         load_locale(lang)
+
+    def refresh_watch_scanner(self):
+        """Refresh the background watch scanner with current active folders."""
+        if not hasattr(self, "_watch_scanner") or not self._watch_scanner:
+            return
+        try:
+            with db.get_connection() as conn:
+                folders = conn.execute(
+                    "SELECT path, id FROM watch_folders WHERE is_active=1"
+                ).fetchall()
+            self._watch_scanner._watched_paths.clear()
+            for row in folders:
+                self._watch_scanner.add_watch(row["path"], row["id"])
+            self._watch_scanner.refresh()
+        except Exception as ex:
+            logger.warning(f"refresh_watch_scanner failed: {ex}")
 
     def _load_theme_mode(self):
         """Load and apply the saved theme mode (system/light/dark)."""

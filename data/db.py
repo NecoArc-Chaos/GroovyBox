@@ -7,6 +7,7 @@ with WAL journal mode for concurrent read/write performance.
 
 import contextlib
 import sqlite3
+import threading
 import os
 from typing import Optional
 
@@ -16,6 +17,9 @@ DB_PATH = None
 
 # Simple in-memory cache for get_setting (cleared on set_setting)
 _SETTING_CACHE: dict = {}
+
+# Thread-local storage for reused connections (reduces connect/close overhead)
+_thread_local = threading.local()
 
 
 def is_mobile() -> bool:
@@ -63,7 +67,18 @@ def get_db_path():
 def get_connection():
     """Create and configure a new SQLite database connection.
     
+    Reuses a thread-local connection when available to reduce
+    connect/close overhead for high-frequency operations.
     """
+    cached = getattr(_thread_local, "connection", None)
+    if cached is not None:
+        try:
+            # Verify connection is still usable
+            cached.execute("SELECT 1")
+            yield cached
+            return
+        except Exception:
+            _thread_local.connection = None
 
     conn = sqlite3.connect(get_db_path())
     conn.row_factory = sqlite3.Row
@@ -71,10 +86,23 @@ def get_connection():
     conn.execute("PRAGMA foreign_keys=ON")
     conn.execute("PRAGMA encoding='UTF-8'")
     conn.text_factory = str
+    _thread_local.connection = conn
     try:
         yield conn
     finally:
-        conn.close()
+        # Do not close; keep for reuse within the same thread
+        pass
+
+
+def close_thread_connection():
+    """Close the thread-local connection, if any."""
+    conn = getattr(_thread_local, "connection", None)
+    if conn is not None:
+        try:
+            conn.close()
+        except Exception:
+            pass
+        _thread_local.connection = None
 
 
 def with_conn(func):
@@ -96,9 +124,11 @@ def init_database():
                 duration INTEGER,
                 path TEXT UNIQUE NOT NULL,
                 art_uri TEXT,
+                art_thumb BLOB,
                 lyrics TEXT,
                 lyrics_offset INTEGER DEFAULT 0,
-                added_at TEXT DEFAULT (datetime('now'))
+                added_at TEXT DEFAULT (datetime('now')),
+                last_checked TEXT
             );
 
             CREATE TABLE IF NOT EXISTS playlists (
