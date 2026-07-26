@@ -267,10 +267,13 @@ class ShellView(ft.View):
         from logic.zip_importer import extract_zip
         from data import track_repository as trepo
         import tempfile
+        import shutil
         all_audio = []
         all_lyrics = []
+        temp_dirs = []
         for zp in paths:
             dest = tempfile.mkdtemp(prefix="groovybox_zip_")
+            temp_dirs.append(dest)
             audio_files, lyrics_files, playlist_files = extract_zip(zp, dest)
             all_audio.extend(audio_files)
             all_lyrics.extend(lyrics_files)
@@ -283,6 +286,14 @@ class ShellView(ft.View):
             logger.info(f"Imported {n} audio files from zip")
         if all_lyrics:
             await self._import_lyrics_files(all_lyrics)
+        # Clean up temporary extraction directories on mobile
+        # (desktop keeps original paths in DB, so we cannot delete)
+        if db.is_mobile():
+            for d in temp_dirs:
+                try:
+                    shutil.rmtree(d, ignore_errors=True)
+                except Exception:
+                    pass
         await self._reload_after_import()
 
     async def _import_from_path(self):
@@ -363,6 +374,7 @@ class ShellView(ft.View):
         elif ext == "zip":
             from logic.zip_importer import extract_zip
             import tempfile
+            import shutil
             dest = tempfile.mkdtemp(prefix="groovybox_zip_")
             audio_files, lyrics_files, playlist_files = extract_zip(path, dest)
             for pp in playlist_files:
@@ -373,6 +385,12 @@ class ShellView(ft.View):
                 n_audio = await trepo.import_files_async(audio_files)
             if lyrics_files:
                 await self._import_lyrics_files(lyrics_files)
+            # Clean up temporary extraction directory on mobile
+            if db.is_mobile():
+                try:
+                    shutil.rmtree(dest, ignore_errors=True)
+                except Exception:
+                    pass
             msg = tr("imported") + f" {n_audio} " + tr("tracks")
             if lyrics_files:
                 msg += f", {len(lyrics_files)} " + tr("lyricsLines")

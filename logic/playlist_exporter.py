@@ -84,13 +84,15 @@ def _export_m3u(playlist: Playlist, tracks: List[Track], output_path: str, out_d
 
         # Export lyrics file if requested
         if include_lyrics and t.lyrics:
-            lyrics_path = os.path.join(out_dir, f"{t.title or 'lyrics'}.lrc")
+            safe_title = os.path.basename(t.title or "lyrics")
+            lyrics_path = os.path.join(out_dir, f"{safe_title}.lrc")
             _write_lyrics_file(lyrics_path, t.lyrics)
 
         # Export cover art if requested
         if include_covers and t.art_uri and os.path.isfile(t.art_uri):
+            safe_title = os.path.basename(t.title or "cover")
             ext = os.path.splitext(t.art_uri)[1] or ".jpg"
-            cover_dst = os.path.join(out_dir, f"{t.title or 'cover'}{ext}")
+            cover_dst = os.path.join(out_dir, f"{safe_title}{ext}")
             shutil.copy2(t.art_uri, cover_dst)
 
     os.makedirs(out_dir, exist_ok=True)

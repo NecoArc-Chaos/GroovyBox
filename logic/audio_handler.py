@@ -280,7 +280,7 @@ class AudioPlayer:
             self._call_on_ui(self.on_loading_change, True)
 
         self._position_ms = 0
-        self._duration_ms = self._fa_get_duration(path)
+        self._duration_ms = track.duration or self._fa_get_duration(path)
         self._is_playing = True
         self._recreate_audio(path)
 

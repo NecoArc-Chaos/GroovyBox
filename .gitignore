@@ -36,7 +36,7 @@ venv/
 # Flet build
 .flet/
 # Build config docs (local reference only)
-build-config-reference.md
+# build-config-reference.md
 
 # Cursor
 .cursor/

@@ -38,24 +38,31 @@ def extract_zip(zip_path: str, dest_dir: str = None) -> Tuple[List[str], List[st
     lyrics_files = []
     playlist_files = []
 
+    real_dest = os.path.realpath(dest_dir)
+
     with zipfile.ZipFile(zip_path, "r") as zf:
         for info in zf.infolist():
             # Skip directory entries
             if info.is_dir():
                 continue
-            
+
             fn = info.filename
             ext = os.path.splitext(fn)[1].lower().lstrip(".")
-            
+
+            # Prevent path traversal (Zip Slip)
+            target_path = os.path.realpath(os.path.join(dest_dir, fn))
+            if not target_path.startswith(real_dest + os.sep) and target_path != real_dest:
+                continue
+
             # Create subdirectories as needed
             out_path = os.path.join(dest_dir, fn)
             os.makedirs(os.path.dirname(out_path), exist_ok=True)
-            
+
             try:
                 zf.extract(info, dest_dir)
             except Exception:
                 continue
-            
+
             # Categorize by file extension
             if ext in AUDIO_EXTENSIONS:
                 audio_files.append(out_path)

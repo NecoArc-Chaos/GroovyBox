@@ -9,7 +9,7 @@ scanning, and track management operations. Supports both synchronous
 import asyncio
 import os
 import shutil
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import threading
 from data.db import get_connection, get_app_dir, is_mobile
 from logic.logger import logger
@@ -89,7 +89,7 @@ def _copy_to_music_dir(src: str) -> str:
     return src
 
 
-def _do_import(file_paths: List[str], conn) -> int:
+def _do_import(file_paths: List[str], conn) -> Tuple[int, List[str]]:
     existing = {
         r["path"] for r in conn.execute(
             "SELECT path FROM tracks WHERE path IN ({})".format(

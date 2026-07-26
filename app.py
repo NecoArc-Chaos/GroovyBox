@@ -227,7 +227,8 @@ class GroovyBoxApp:
                 return
 
     async def _check_missing_tracks_on_startup(self):
-        missing = trepo.get_missing_tracks()
+        loop = asyncio.get_running_loop()
+        missing = await loop.run_in_executor(None, trepo.get_missing_tracks)
         self._missing_count = len(missing)
         if self._missing_count > 0:
             logger.warning(f"Found {self._missing_count} missing track(s) on startup")
@@ -235,7 +236,7 @@ class GroovyBoxApp:
 
             def do_remove(e):
                 self.page.pop_dialog()
-                self._remove_missing_tracks()
+                self.page.run_task(self._remove_missing_tracks)
 
             dlg = ft.AlertDialog(
                 title=ft.Text(tr("missingTracks")),
@@ -248,10 +249,11 @@ class GroovyBoxApp:
             self.page.show_dialog(dlg)
             self.page.update()
 
-    def _remove_missing_tracks(self):
-        missing = trepo.get_missing_tracks()
+    async def _remove_missing_tracks(self):
+        loop = asyncio.get_running_loop()
+        missing = await loop.run_in_executor(None, trepo.get_missing_tracks)
         ids = [t.id for t in missing]
-        trepo.delete_tracks(ids)
+        await loop.run_in_executor(None, trepo.delete_tracks, ids)
         self._missing_count = 0
         self._reload_ui()
 
