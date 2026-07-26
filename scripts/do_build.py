@@ -32,6 +32,10 @@ def ensure_mobile_deps(plat: str):
     watchdog>=3.0.0 often has no prebuilt wheels for Android/iOS CI runners,
     causing pip install failures. Since watch_scanner.py already handles
     missing watchdog gracefully, we can safely skip it on mobile.
+    
+    pystray is a desktop-only system tray library that imports X11/AppKit
+    backends at module load time, causing runtime crashes on Android/iOS.
+    tray_manager.py already handles missing pystray gracefully.
     """
     if plat not in MOBILE_PLATFORMS:
         return
@@ -40,18 +44,18 @@ def ensure_mobile_deps(plat: str):
         lines = f.readlines()
     
     new_lines = []
-    removed = False
+    removed = []
     for line in lines:
         stripped = line.strip()
-        if stripped.startswith("watchdog"):
-            removed = True
+        if stripped.startswith("watchdog") or stripped.startswith("pystray"):
+            removed.append(stripped)
             continue
         new_lines.append(line)
     
     if removed:
         with open(req, "w", encoding="utf-8") as f:
             f.writelines(new_lines)
-        print(f"Removed watchdog dependency from {req} for mobile build")
+        print(f"Removed mobile-problematic dependencies from {req} for mobile build: {', '.join(removed)}")
 
 
 def load_config():
