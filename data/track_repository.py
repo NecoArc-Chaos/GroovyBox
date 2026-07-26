@@ -89,7 +89,7 @@ def _copy_to_music_dir(src: str) -> str:
     return src
 
 
-def _do_import(file_paths: List[str], conn) -> Tuple[int, List[str]]:
+def _do_import(file_paths: List[str], conn, copy: bool = False) -> Tuple[int, List[str]]:
     existing = {
         r["path"] for r in conn.execute(
             "SELECT path FROM tracks WHERE path IN ({})".format(
@@ -99,6 +99,7 @@ def _do_import(file_paths: List[str], conn) -> Tuple[int, List[str]]:
     }
     new_paths = [p for p in file_paths if p not in existing]
     mobile = is_mobile()
+    should_copy = mobile or copy
 
     art_dir = os.path.join(get_app_dir(), "art")
     os.makedirs(art_dir, exist_ok=True)
@@ -112,7 +113,7 @@ def _do_import(file_paths: List[str], conn) -> Tuple[int, List[str]]:
             filename = os.path.basename(path)
             title = meta.title or os.path.splitext(filename)[0]
 
-            final_path = _copy_to_music_dir(path) if mobile else path
+            final_path = _copy_to_music_dir(path) if should_copy else path
 
             art_path = None
             if meta.art_bytes:
@@ -139,11 +140,11 @@ def _do_import(file_paths: List[str], conn) -> Tuple[int, List[str]]:
     return imported, new_paths
 
 
-def import_files(file_paths: List[str], callback=None):
+def import_files(file_paths: List[str], callback=None, copy: bool = False):
     def _import():
         try:
             with get_connection() as conn:
-                imported, new_paths = _do_import(file_paths, conn)
+                imported, new_paths = _do_import(file_paths, conn, copy=copy)
             logger.info("import_files: imported %d/%d files", imported, len(new_paths))
             if callback:
                 callback()
@@ -152,14 +153,14 @@ def import_files(file_paths: List[str], callback=None):
     threading.Thread(target=_import, daemon=True).start()
 
 
-async def import_files_async(file_paths: List[str]) -> int:
+async def import_files_async(file_paths: List[str], copy: bool = False) -> int:
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, _import_sync, file_paths)
+    return await loop.run_in_executor(None, _import_sync, file_paths, copy)
 
 
-def _import_sync(file_paths: List[str]) -> int:
+def _import_sync(file_paths: List[str], copy: bool = False) -> int:
     with get_connection() as conn:
-        imported, new_paths = _do_import(file_paths, conn)
+        imported, new_paths = _do_import(file_paths, conn, copy=copy)
     logger.info("import_files_async: imported %d/%d files", imported, len(new_paths))
     return imported
 

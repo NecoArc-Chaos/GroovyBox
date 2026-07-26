@@ -282,18 +282,17 @@ class ShellView(ft.View):
                 from logic.playlist_parser import parse_playlist
                 all_audio.extend(parse_playlist(pp))
         if all_audio:
-            n = await trepo.import_files_async(all_audio)
+            n = await trepo.import_files_async(all_audio, copy=True)
             logger.info(f"Imported {n} audio files from zip")
         if all_lyrics:
             await self._import_lyrics_files(all_lyrics)
-        # Clean up temporary extraction directories on mobile
-        # (desktop keeps original paths in DB, so we cannot delete)
-        if db.is_mobile():
-            for d in temp_dirs:
-                try:
-                    shutil.rmtree(d, ignore_errors=True)
-                except Exception:
-                    pass
+        # Clean up temporary extraction directories
+        # (files have been copied to internal storage when copy=True)
+        for d in temp_dirs:
+            try:
+                shutil.rmtree(d, ignore_errors=True)
+            except Exception:
+                pass
         await self._reload_after_import()
 
     async def _import_from_path(self):
@@ -382,15 +381,15 @@ class ShellView(ft.View):
                 audio_files.extend(parse_playlist(pp))
             n_audio = 0
             if audio_files:
-                n_audio = await trepo.import_files_async(audio_files)
+                n_audio = await trepo.import_files_async(audio_files, copy=True)
             if lyrics_files:
                 await self._import_lyrics_files(lyrics_files)
-            # Clean up temporary extraction directory on mobile
-            if db.is_mobile():
-                try:
-                    shutil.rmtree(dest, ignore_errors=True)
-                except Exception:
-                    pass
+            # Clean up temporary extraction directory
+            # (files have been copied to internal storage)
+            try:
+                shutil.rmtree(dest, ignore_errors=True)
+            except Exception:
+                pass
             msg = tr("imported") + f" {n_audio} " + tr("tracks")
             if lyrics_files:
                 msg += f", {len(lyrics_files)} " + tr("lyricsLines")
