@@ -10,6 +10,7 @@ import json, subprocess, sys, os, shutil
 
 DESKTOP_PLATFORMS = ("windows", "linux", "macos")
 EXTRA_DESKTOP_DEPS = "# desktop-only dependencies\npystray>=0.19.0\n"
+MOBILE_PLATFORMS = ("android", "ios", "apk", "aab", "ipa")
 
 
 def ensure_desktop_deps(plat: str):
@@ -23,6 +24,34 @@ def ensure_desktop_deps(plat: str):
         with open(req, "a", encoding="utf-8") as f:
             f.write(f"\n{EXTRA_DESKTOP_DEPS}")
         print(f"Injected desktop dependencies into {req}")
+
+
+def ensure_mobile_deps(plat: str):
+    """Remove mobile-problematic dependencies for mobile builds.
+    
+    watchdog>=3.0.0 often has no prebuilt wheels for Android/iOS CI runners,
+    causing pip install failures. Since watch_scanner.py already handles
+    missing watchdog gracefully, we can safely skip it on mobile.
+    """
+    if plat not in MOBILE_PLATFORMS:
+        return
+    req = "requirements.txt"
+    with open(req, encoding="utf-8") as f:
+        lines = f.readlines()
+    
+    new_lines = []
+    removed = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("watchdog"):
+            removed = True
+            continue
+        new_lines.append(line)
+    
+    if removed:
+        with open(req, "w", encoding="utf-8") as f:
+            f.writelines(new_lines)
+        print(f"Removed watchdog dependency from {req} for mobile build")
 
 
 def load_config():
@@ -61,11 +90,18 @@ def build_cmd(platform: str):
     for Android and iOS.
     
     Args:
-        platform: Target platform (windows, apk, aab, ipa, web, etc.)
+        platform: Target platform (windows, linux, macos, android, ios, apk, aab, ipa, web, etc.)
     
     Returns:
         List of command arguments for subprocess.run.
     """
+    # Map CI-friendly platform names to flet build targets
+    PLATFORM_ALIASES = {
+        "android": "apk",
+        "ios": "ipa",
+    }
+    platform = PLATFORM_ALIASES.get(platform, platform)
+    
     cfg = load_config()
     app = cfg["app"]
     android = cfg.get("android", {})
@@ -140,6 +176,7 @@ if __name__ == "__main__":
     plat = os.environ.get("TARGET_PLATFORM", platform)
     copy_icons()
     ensure_desktop_deps(plat)
+    ensure_mobile_deps(plat)
     cmd = build_cmd(plat)
     print("Running:", " ".join(cmd))
     subprocess.run(cmd, check=True)
