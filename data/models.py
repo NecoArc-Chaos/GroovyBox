@@ -21,9 +21,11 @@ class Track:
         duration: Track duration in milliseconds (optional).
         path: Absolute file path to the audio file.
         art_uri: Path to the album art image file (optional).
+        art_thumb: Raw bytes of album art thumbnail (optional).
         lyrics: JSON string containing lyrics data (optional).
         lyrics_offset: Milliseconds offset for lyrics synchronization.
         added_at: Timestamp when the track was added to the library.
+        last_checked: ISO timestamp of last missing-file check (optional).
     """
     id: int = 0
     title: str = ""
@@ -32,9 +34,11 @@ class Track:
     duration: Optional[int] = None
     path: str = ""
     art_uri: Optional[str] = None
+    art_thumb: Optional[bytes] = None
     lyrics: Optional[str] = None
     lyrics_offset: int = 0
     added_at: str = ""
+    last_checked: Optional[str] = None
 
 
 @dataclass

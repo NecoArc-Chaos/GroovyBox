@@ -155,6 +155,9 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
             except Exception as ex:
                 page.show_dialog(ft.SnackBar(ft.Text(f"Error: {ex}")))
             refresh()
+            app = page.session.store.get("app")
+            if app:
+                app.refresh_watch_scanner()
 
     def scan_libraries(e):
         with db.get_connection() as conn:
@@ -255,12 +258,18 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
             conn.execute("UPDATE watch_folders SET is_active=? WHERE id=?", (int(active), fid))
             conn.commit()
         refresh()
+        app = page.session.store.get("app")
+        if app:
+            app.refresh_watch_scanner()
 
     def _delete_folder(fid):
         with db.get_connection() as conn:
             conn.execute("DELETE FROM watch_folders WHERE id=?", (fid,))
             conn.commit()
         refresh()
+        app = page.session.store.get("app")
+        if app:
+            app.refresh_watch_scanner()
 
     def _set_log_level(e):
         """Change the application log level."""
