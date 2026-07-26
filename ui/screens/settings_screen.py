@@ -140,7 +140,7 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
 
     async def add_library(e):
         from logic.file_dialog import pick_directory
-        path = await pick_directory(page, title="Select music library folder")
+        path = await pick_directory(page, title=tr("selectMusicLibraryFolder"))
         if path:
             import os
             name = os.path.basename(path)
@@ -160,7 +160,7 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
         with db.get_connection() as conn:
             folders = conn.execute("SELECT * FROM watch_folders WHERE is_active=1").fetchall()
         if not folders:
-            page.show_dialog(ft.SnackBar(ft.Text("No active libraries")))
+            page.show_dialog(ft.SnackBar(ft.Text(tr("noActiveLibraries"))))
             page.update()
             return
 
@@ -188,8 +188,8 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
             title=ft.Text(tr("resetTrackDatabase")),
             content=ft.Text(tr("confirmResetTrackDatabase")),
             actions=[
-                ft.TextButton("Cancel", on_click=confirm_no),
-                ft.FilledButton("Yes", on_click=confirm_yes, bgcolor=ft.Colors.RED, color=ft.Colors.WHITE),
+                ft.TextButton(tr("cancel"), on_click=confirm_no),
+                ft.FilledButton(tr("yes"), on_click=confirm_yes, bgcolor=ft.Colors.RED, color=ft.Colors.WHITE),
             ],
         )
         page.show_dialog(dlg)
@@ -281,7 +281,7 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
             _export_logs(tmp_path)
             with open(tmp_path, "rb") as f:
                 log_bytes = f.read()
-            saved = await save_file(page, title="Export logs", default_name="groovybox_logs.txt",
+            saved = await save_file(page, title=tr("exportLogs"), default_name="groovybox_logs.txt",
                                    extensions=["txt"], src_bytes=log_bytes)
             if saved:
                 page.show_dialog(ft.SnackBar(ft.Text(tr("logsExported", saved))))
@@ -438,9 +438,9 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                         trailing=ft.Dropdown(
                             value=settings["lyrics_mode"],
                             options=[
-                                ft.dropdown.Option("auto", "Auto"),
-                                ft.dropdown.Option("curved", "Curved"),
-                                ft.dropdown.Option("flat", "Flat"),
+                                ft.dropdown.Option("auto", tr("lyricsModeAuto")),
+                                ft.dropdown.Option("curved", tr("lyricsModeCurved")),
+                                ft.dropdown.Option("flat", tr("lyricsModeFlat")),
                             ],
                             on_select=on_lyrics_mode_change,
                             ),
@@ -488,7 +488,7 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                             trailing=ft.Dropdown(
                                 value=get_locale(),
                                 options=[
-                                    ft.dropdown.Option("en", "English"),
+                                    ft.dropdown.Option("en", tr("english")),
                                     ft.dropdown.Option("zh", tr("chinese")),
                                 ],
                                 on_select=on_language_change,
@@ -568,8 +568,8 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                 padding=16,
                 content=ft.Column(
                     controls=[
-                        ft.Text("Logs", size=18, weight=ft.FontWeight.BOLD),
-                        ft.Text("View and export application logs.", size=12, color=ft.Colors.GREY),
+                        ft.Text(tr("logs"), size=18, weight=ft.FontWeight.BOLD),
+                        ft.Text(tr("logsDescription"), size=12, color=ft.Colors.GREY),
                         ft.ListTile(
                             title=ft.Text(tr("logLevel")),
                             subtitle=ft.Text(tr("logLevelDescription"), size=11, color=ft.Colors.GREY),
