@@ -111,10 +111,9 @@ def build_cmd(platform: str):
     android = cfg.get("android", {})
 
     # Base command with common options.
-    # Use "python -m flet" instead of "flet" to avoid PATH issues
-    # in CI runners where the flet executable may not be on PATH.
+    # Use "flet" CLI entry point installed by flet[all] or flet-cli.
     cmd = [
-        sys.executable, "-m", "flet", "build", platform,
+        "flet", "build", platform,
         "--yes", "--no-rich-output", "--skip-flutter-doctor",
         "--project", app["project"],
         "--product", app["product"],

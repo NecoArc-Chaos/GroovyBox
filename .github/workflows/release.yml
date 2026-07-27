@@ -47,7 +47,7 @@ jobs:
 
       - name: Install dependencies
         run: | 
-          pip install flet==${{ env.FLET_VERSION }} flet-audio==${{ env.FLET_VERSION }}
+          pip install "flet[all]==${{ env.FLET_VERSION }}"
           pip install mutagen Pillow colorthief httpx
 
       - name: Install system deps
