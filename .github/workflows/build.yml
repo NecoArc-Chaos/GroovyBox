@@ -164,6 +164,8 @@ jobs:
           key: flutter-${{ env.FLET_VERSION }}
       - name: Build
         timeout-minutes: 60
+        env:
+          FLET_DISABLE_STRIP: '1'
         run: python scripts/do_build.py macos
       - uses: actions/upload-artifact@v4
         with:

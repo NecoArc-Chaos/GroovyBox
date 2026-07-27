@@ -65,6 +65,7 @@ jobs:
         timeout-minutes: 60
         env:
           PYTHONIOENCODING: utf-8
+          FLET_DISABLE_STRIP: '1'
           # Android signing is optional; unsigned APK is produced if secrets are missing.
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
