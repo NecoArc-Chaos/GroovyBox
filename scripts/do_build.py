@@ -129,6 +129,12 @@ def build_cmd(platform: str):
     if app.get("copyright"):
         cmd += ["--copyright", app["copyright"]]
 
+    # Work around Xcode 15+ strip incompatibility on macOS CI runners.
+    # The system `strip` tool fails with "string table not at" when processing
+    # Flet's bundled binaries. Skipping strip avoids the failure.
+    if platform == "macos":
+        cmd += ["--no-strip"]
+
     # Android-specific options
     if platform in ("apk", "aab"):
         for perm in android.get("permissions", []):
