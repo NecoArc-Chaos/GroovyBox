@@ -129,6 +129,13 @@ def build_cmd(platform: str):
     if app.get("copyright"):
         cmd += ["--copyright", app["copyright"]]
 
+    # Work around Xcode 15+ strip incompatibility on macOS CI runners.
+    # The system `strip` tool fails with "string table not at" when processing
+    # Flet's bundled binaries. Disable SPM and fall back to CocoaPods which
+    # does not trigger the same strip failure.
+    if platform == "macos":
+        cmd += ["--no-swift-package-manager"]
+
     # Android-specific options
     if platform in ("apk", "aab"):
         for perm in android.get("permissions", []):
@@ -189,4 +196,6 @@ if __name__ == "__main__":
     ensure_mobile_deps(plat)
     cmd = build_cmd(plat)
     print("Running:", " ".join(cmd))
-    subprocess.run(cmd, check=True)
+    env = os.environ.copy()
+    env["FLET_DISABLE_STRIP"] = "1"
+    subprocess.run(cmd, check=True, env=env)
