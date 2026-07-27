@@ -9,10 +9,9 @@ on:
   workflow_dispatch:
 
 env:
-  # Pin to 0.84.0 to avoid a known Android black-screen regression in 0.85.3.
-  # 0.84.2 does not exist on PyPI; use the latest 0.84.x release instead.
-  # See: https://github.com/flet-dev/flet/issues/2363
-  FLET_VERSION: '0.84.0'
+  # Use 0.86.1 which fixes the Android APK black-screen regression
+  # present in 0.85.x. See: https://github.com/flet-dev/flet/issues/2363
+  FLET_VERSION: '0.86.1'
 
 jobs:
   build-all:
