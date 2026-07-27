@@ -156,11 +156,16 @@ def build_cmd(platform: str):
             if isinstance(val, list):
                 cmd += ["--info-plist", f"{key}={json.dumps(val)}"]
             elif isinstance(val, bool):
-                cmd += ["--info-plist", f"{key}={'true' if val else 'false'}"]
+                cmd += ["--info-plist", f"{key}={ 'true' if val else 'false'}"]
             else:
                 cmd += ["--info-plist", f"{key}={val}"]
         
-        # iOS signing configuration (from environment variables)
+        # iOS signing configuration (optional; only added when environment variables are present)
+        # In the release workflow, signing is disabled by default. To enable, set:
+        #   - IOS_TEAM_ID
+        #   - IOS_SIGNING_CERTIFICATE (e.g. "Apple Distribution")
+        #   - IOS_PROVISIONING_PROFILE_NAME
+        # and uncomment the signing steps in .github/workflows/release.yml.
         team_id = os.environ.get("IOS_TEAM_ID", "")
         cert = os.environ.get("IOS_SIGNING_CERTIFICATE", "")
         profile = os.environ.get("IOS_PROVISIONING_PROFILE_NAME", "")
