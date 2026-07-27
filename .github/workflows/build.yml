@@ -9,7 +9,9 @@ on:
         default: 'windows,linux,macos,android,ios'
 
 env:
-  FLET_VERSION: '0.85.3'
+  # Pin to 0.84.2 to avoid a known Android black-screen regression in 0.85.3.
+  # See: https://github.com/flet-dev/flet/issues/2363
+  FLET_VERSION: '0.84.2'
 
 jobs:
   windows:
