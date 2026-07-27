@@ -29,8 +29,8 @@ def _show_error(page: ft.Page, title: str, error: Exception):
             ft.View(
                 route="/error",
                 controls=[
-                    ft.Text(f"{title}", size=20, weight=ft.FontWeight.BOLD),
-                    ft.Text(str(error), color=ft.Colors.RED),
+                    Text(f"{title}", size=20, weight=ft.FontWeight.BOLD),
+                    Text(str(error), color=ft.Colors.RED),
                 ],
             )
         )
@@ -57,6 +57,14 @@ def main(page: ft.Page):
         db.init_database()
         from app import GroovyBoxApp
         GroovyBoxApp(page)
+        # On Android, page.push_route via run_task can be unreliable during
+        # early startup. Force the initial route here so the library screen
+        # renders immediately instead of staying on a blank default route.
+        try:
+            if not page.views:
+                page.route = "/library"
+        except Exception:
+            pass
     except Exception as ex:
         traceback.print_exc()
         _show_error(page, "启动失败", ex)

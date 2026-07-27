@@ -224,7 +224,7 @@ class MiniPlayerWidget(ft.Container):
         except RuntimeError:
             bottom_pad = 0
         self.height = 72 + bottom_pad
-        is_desktop = self._page.width > 800
+        is_desktop = (self._page.width or 0) > 800
 
         self._pos_slider = None
         self._play_btn = None

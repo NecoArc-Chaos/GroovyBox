@@ -32,7 +32,11 @@ class ShellView(ft.View):
         super().__init__(route="/", padding=0, spacing=0)
         self._page = page
         self.app = page.session.store.get("app")
-        self._is_mobile = page.width < 600
+        # page.width can be None during early Android initialization.
+        # Default to mobile layout (True) when size is unknown; it will
+        # self-correct on the first resize event once the Flutter client
+        # reports the real viewport size.
+        self._is_mobile = (page.width or 0) < 600
         self._swipe_back_started = False
 
         # Main content area and mini player
