@@ -6,6 +6,7 @@ and launches the main application instance.
 """
 
 import os
+import traceback
 
 # HOME writability test: on iOS, Flet sets HOME to the app container root
 # which is read-only. Python stdlib (ssl, pip, history) and Flet itself
@@ -16,9 +17,26 @@ if not os.access(_home, os.W_OK):
     os.environ["HOME"] = os.path.join(_home, "Library", "Application Support")
 
 import flet as ft
-from flet import FilePicker
+from flet import FilePicker, Text
 import flet_audio  # Ensure plugin is detected by build scanner
-from app import GroovyBoxApp
+
+
+def _show_error(page: ft.Page, title: str, error: Exception):
+    """Display a fallback error screen so the user sees something instead of black."""
+    try:
+        page.views.clear()
+        page.views.append(
+            ft.View(
+                route="/error",
+                controls=[
+                    ft.Text(f"{title}", size=20, weight=ft.FontWeight.BOLD),
+                    ft.Text(str(error), color=ft.Colors.RED),
+                ],
+            )
+        )
+        page.update()
+    except Exception:
+        pass
 
 
 def main(page: ft.Page):
@@ -33,11 +51,15 @@ def main(page: ft.Page):
     Args:
         page: The Flet page object provided by the framework.
     """
-    page._file_picker = FilePicker()
-    from data import db
-    db.init_database()
-
-    GroovyBoxApp(page)
+    try:
+        page._file_picker = FilePicker()
+        from data import db
+        db.init_database()
+        from app import GroovyBoxApp
+        GroovyBoxApp(page)
+    except Exception as ex:
+        traceback.print_exc()
+        _show_error(page, "启动失败", ex)
 
 
 # Launch the application using Flet's built-in runner

@@ -466,7 +466,17 @@ class GroovyBoxApp:
         Args:
             e: Route change event from the Flet framework.
         """
-        self._sync_views()
+        try:
+            self._sync_views()
+        except Exception as ex:
+            logger.exception("Route change failed")
+            # Fallback: try to show the library screen so the user sees
+            # something instead of a black screen.
+            try:
+                self.page.route = "/library"
+                self._sync_views()
+            except Exception:
+                pass
 
     def _on_window_resize(self, e):
         """Handle window resize by notifying the current active screen."""
