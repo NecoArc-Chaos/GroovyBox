@@ -187,7 +187,7 @@ jobs:
       - uses: android-actions/setup-android@v3
       - name: Install dependencies
         run: |
-          pip install flet==${{ env.FLET_VERSION }} flet-audio==${{ env.FLET_VERSION }}
+          pip install "flet[all]==${{ env.FLET_VERSION }}"
           pip install mutagen Pillow colorthief httpx flet-permission-handler
       - name: Cache Flutter SDK
         uses: actions/cache@v4
