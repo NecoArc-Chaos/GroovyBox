@@ -59,7 +59,8 @@ class LibraryScreen(ft.Column):
         Chooses between large (rail) and mobile (tabs) layout based on width.
         """
         try:
-            is_large = self._page.width > 600
+            width = self._page.width or 0
+            is_large = width > 600
             self.controls = [self._build_large_layout() if is_large else self._build_mobile_layout()]
         except Exception as ex:
             logger.exception("LibraryScreen._build failed")
@@ -70,11 +71,12 @@ class LibraryScreen(ft.Column):
         Returns:
             A Row with NavigationRail on the left and content on the right.
         """
+        width = self._page.width or 0
         nav = ft.NavigationRail(
             selected_index=self.selected_tab,
             on_change=self._on_nav_change,
             bgcolor=ft.Colors.TRANSPARENT,
-            extended=self._page.width > 800,
+            extended=width > 800,
             destinations=[
                 ft.NavigationRailDestination(icon=ft.Icons.AUDIOTRACK, label=ft.Text(tr("tracks"))),
                 ft.NavigationRailDestination(icon=ft.Icons.ALBUM, label=ft.Text(tr("albums"))),

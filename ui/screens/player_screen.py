@@ -219,7 +219,7 @@ class PlayerScreen(ft.Container):
 
         track = player.get_current_track()
         meta = app.current_metadata if app else None
-        is_desktop = self._page.width > 800
+        is_desktop = (self._page.width or 0) > 800
         ly_mode = db.get_setting("lyrics_mode", "auto")
         use_curved = (ly_mode == "curved") or (ly_mode == "auto" and is_desktop)
 
@@ -477,9 +477,9 @@ class PlayerScreen(ft.Container):
         if compact:
             art_size = 180
         elif is_desktop:
-            art_size = min(360, int(self._page.width * 0.28))
+            art_size = min(360, int((self._page.width or 400) * 0.28))
         else:
-            art_size = min(260, int(self._page.width - 80))
+            art_size = min(260, int((self._page.width or 400) - 80))
 
         art_content = ft.Image(
             src=track.art_uri, fit=ft.BoxFit.COVER,

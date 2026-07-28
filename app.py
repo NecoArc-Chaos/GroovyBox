@@ -83,8 +83,9 @@ class GroovyBoxApp:
         page.on_route_change = self._on_route_change
         page.on_view_pop = self._on_view_pop
 
-        # Track last window size and register resize listener
-        self._last_window_width = page.width
+        # Track last window size and register resize listener.
+        # page.width can be None on Android during early init; treat as 0.
+        self._last_window_width = page.width or 0
         page.on_resize = self._on_window_resize
 
         # Global keyboard shortcuts for desktop
@@ -120,8 +121,15 @@ class GroovyBoxApp:
             except Exception:
                 logger.warning("window.on_event not supported")
 
-        # Navigate to the library screen as the initial view
-        page.run_task(page.push_route, "/library")
+        # Navigate to the library screen as the initial view.
+        # Use direct route assignment instead of run_task(push_route) because
+        # the latter can be unreliable on Android during early startup when
+        # the Flutter client is still initializing.
+        try:
+            page.route = "/library"
+            self._sync_views()
+        except Exception:
+            logger.warning("Initial route sync failed", exc_info=True)
         page.run_task(self._tray_watch)
         self._set_window_icon()
 
@@ -477,12 +485,22 @@ class GroovyBoxApp:
         Args:
             e: Route change event from the Flet framework.
         """
-        self._sync_views()
+        try:
+            self._sync_views()
+        except Exception as ex:
+            logger.exception("Route change failed")
+            # Fallback: try to show the library screen so the user sees
+            # something instead of a black screen.
+            try:
+                self.page.route = "/library"
+                self._sync_views()
+            except Exception:
+                pass
 
     def _on_window_resize(self, e):
         """Handle window resize by notifying the current active screen."""
         try:
-            current_width = self.page.width
+            current_width = self.page.width or 0
             if current_width == self._last_window_width:
                 return
             self._last_window_width = current_width

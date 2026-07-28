@@ -32,12 +32,21 @@ class ShellView(ft.View):
         super().__init__(route="/", padding=0, spacing=0)
         self._page = page
         self.app = page.session.store.get("app")
-        self._is_mobile = page.width < 600
+        # page.width can be None during early Android initialization.
+        # Default to mobile layout (True) when size is unknown; it will
+        # self-correct on the first resize event once the Flutter client
+        # reports the real viewport size.
+        self._is_mobile = (page.width or 0) < 600
         self._swipe_back_started = False
 
         # Main content area and mini player
         self.content_view = ft.Column(expand=True, spacing=0)
         self.mini_player = MiniPlayerWidget(page)
+
+        # Build navigation bar for mobile (MD3 style)
+        self.navigation_bar = None
+        if self._is_mobile:
+            self.navigation_bar = self._build_navigation_bar()
 
         # Assemble the shell layout with optional global background
         body = ft.Column(
@@ -63,6 +72,15 @@ class ShellView(ft.View):
                         on_horizontal_drag_end=self._on_back_drag_end,
                     ),
                 ],
+            )
+
+        # On mobile devices, use SafeArea and set navigation bar
+        if self._is_mobile:
+            self._page.navigation_bar = self.navigation_bar
+            body = ft.SafeArea(
+                content=body,
+                avoid_intrusions_top=True,
+                avoid_intrusions_bottom=False,
             )
 
         bg_wrapper = self._build_global_bg_wrapper(body)
@@ -149,6 +167,44 @@ class ShellView(ft.View):
                     ),
                 ],
             ),
+        )
+
+    def _build_navigation_bar(self):
+        """Build MD3-style bottom navigation bar for mobile.
+        
+        Returns:
+            A NavigationBar with Library, Playlists, and Settings destinations.
+        """
+        def on_nav_change(e):
+            selected_index = e.control.selected_index
+            if selected_index == 0:
+                self._page.run_task(self._page.push_route, "/library")
+            elif selected_index == 1:
+                self._page.run_task(self._page.push_route, "/playlists")
+            elif selected_index == 2:
+                self._page.run_task(self._page.push_route, "/settings")
+
+        return ft.NavigationBar(
+            selected_index=0,
+            on_change=on_nav_change,
+            label_behavior=ft.NavigationBarLabelBehavior.ALWAYS_SHOW,
+            destinations=[
+                ft.NavigationBarDestination(
+                    icon=ft.Icons.LIBRARY_MUSIC_OUTLINED,
+                    selected_icon=ft.Icons.LIBRARY_MUSIC,
+                    label=tr("library"),
+                ),
+                ft.NavigationBarDestination(
+                    icon=ft.Icons.PLAYLIST_PLAY_OUTLINED,
+                    selected_icon=ft.Icons.PLAYLIST_PLAY,
+                    label=tr("playlists"),
+                ),
+                ft.NavigationBarDestination(
+                    icon=ft.Icons.SETTINGS_OUTLINED,
+                    selected_icon=ft.Icons.SETTINGS,
+                    label=tr("settings"),
+                ),
+            ],
         )
 
     def _show_import_menu(self, e):

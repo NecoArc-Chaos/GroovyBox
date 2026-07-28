@@ -35,7 +35,8 @@ class PlaylistDetailView(ft.Container):
         self._selecting = False
         self._selected_ids = set()
         self._sel_bar_count = None
-        self._is_mobile = page.width < 600
+        # page.width can be None during early Android init; default to mobile.
+        self._is_mobile = (page.width or 0) < 600
         self._build()
 
     def _get_app(self):

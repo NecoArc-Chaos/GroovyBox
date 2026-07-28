@@ -16,7 +16,9 @@ on:
         default: 'windows,linux,macos,android,ios'
 
 env:
-  FLET_VERSION: '0.85.3'
+  # Use 0.86.1 which fixes the Android APK black-screen regression
+  # present in 0.85.x. See: https://github.com/flet-dev/flet/issues/2363
+  FLET_VERSION: '0.86.1'
 
 jobs:
   ci-check:
@@ -46,8 +48,8 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install dependencies
-        run: |
-          pip install flet==${{ env.FLET_VERSION }} flet-audio==${{ env.FLET_VERSION }}
+        run: | 
+          pip install "flet[all]==${{ env.FLET_VERSION }}"
           pip install mutagen Pillow colorthief httpx
       - name: Cache Flutter SDK
         uses: actions/cache@v4
@@ -151,8 +153,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libmpv-dev libgtk-3-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev liblzma-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
       - name: Install dependencies
-        run: |
-          pip install flet==${{ env.FLET_VERSION }} flet-audio==${{ env.FLET_VERSION }}
+        run: | 
+          pip install "flet[all]==${{ env.FLET_VERSION }}"
           pip install mutagen Pillow colorthief httpx
       - name: Cache Flutter SDK
         uses: actions/cache@v4
@@ -177,8 +179,8 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install dependencies
-        run: |
-          pip install flet==${{ env.FLET_VERSION }} flet-audio==${{ env.FLET_VERSION }}
+        run: | 
+          pip install "flet[all]==${{ env.FLET_VERSION }}"
           pip install mutagen Pillow colorthief httpx
       - name: Cache Flutter SDK
         uses: actions/cache@v4
@@ -187,6 +189,8 @@ jobs:
           key: flutter-${{ env.FLET_VERSION }}
       - name: Build
         timeout-minutes: 60
+        env:
+          FLET_DISABLE_STRIP: '1'
         run: python scripts/do_build.py macos
       - uses: actions/upload-artifact@v4
         with:
@@ -209,7 +213,7 @@ jobs:
       - uses: android-actions/setup-android@v3
       - name: Install dependencies
         run: |
-          pip install flet==${{ env.FLET_VERSION }} flet-audio==${{ env.FLET_VERSION }}
+          pip install "flet[all]==${{ env.FLET_VERSION }}"
           pip install mutagen Pillow colorthief httpx flet-permission-handler
       - name: Cache Flutter SDK
         uses: actions/cache@v4
@@ -243,8 +247,8 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install dependencies
-        run: |
-          pip install flet==${{ env.FLET_VERSION }} flet-audio==${{ env.FLET_VERSION }}
+        run: | 
+          pip install "flet[all]==${{ env.FLET_VERSION }}"
           pip install mutagen Pillow colorthief httpx
       - name: Cache Flutter SDK
         uses: actions/cache@v4
