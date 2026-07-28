@@ -33,7 +33,19 @@ def main(page: ft.Page):
     Args:
         page: The Flet page object provided by the framework.
     """
-    page._file_picker = FilePicker()
+    # Pre-create FilePicker to ensure Flutter plugin registration.
+    # Use public API when available; fall back to internal attribute
+    # for older Flet versions or build-scanner detection.
+    try:
+        # Preferred public API (Flet >= 0.27)
+        if not hasattr(page, "file_picker") or page.file_picker is None:
+            page.file_picker = FilePicker()
+    except Exception:
+        # Fallback for build-time plugin detection on some Flet versions
+        try:
+            page._file_picker = FilePicker()
+        except Exception:
+            pass
     from data import db
     db.init_database()
 

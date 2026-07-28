@@ -19,10 +19,13 @@ def ensure_desktop_deps(plat: str):
     req = "requirements.txt"
     with open(req, encoding="utf-8") as f:
         content = f.read()
-    if "pystray" not in content:
-        with open(req, "a", encoding="utf-8") as f:
-            f.write(f"\n{EXTRA_DESKTOP_DEPS}")
-        print(f"Injected desktop dependencies into {req}")
+    # Use a marker to avoid duplicate injection
+    marker = "# desktop-only dependencies"
+    if marker in content:
+        return
+    with open(req, "a", encoding="utf-8") as f:
+        f.write(f"\n{EXTRA_DESKTOP_DEPS}")
+    print(f"Injected desktop dependencies into {req}")
 
 
 def load_config():

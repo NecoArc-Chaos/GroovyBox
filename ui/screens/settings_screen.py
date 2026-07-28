@@ -622,7 +622,7 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                         ft.Container(height=4),
                         *hotkey_rows,
                         ft.Container(height=4),
-                        ft.Text("↑ ↓  ← → 仅在全屏播放器中生效。点击按键可自定义快捷键，Esc取消。",
+                        ft.Text(tr("keyboardShortcutsNote"),
                             size=11, color=ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE)),
                     ],
                 ),

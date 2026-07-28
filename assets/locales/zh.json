@@ -254,5 +254,6 @@
   "closeConfirmMessage": "您要退出程序还是隐藏到系统托盘？",
   "closeConfirmExit": "退出",
   "closeConfirmHide": "隐藏到托盘",
-  "pressBackAgainToExit": "再按一次返回键退出"
+  "pressBackAgainToExit": "再按一次返回键退出",
+  "keyboardShortcutsNote": "↑ ↓ ← → 方向键仅在全屏播放器中生效。点击按键可自定义快捷键，Esc 取消。"
 }
