@@ -43,6 +43,11 @@ class ShellView(ft.View):
         self.content_view = ft.Column(expand=True, spacing=0)
         self.mini_player = MiniPlayerWidget(page)
 
+        # Build navigation bar for mobile (MD3 style)
+        self.navigation_bar = None
+        if self._is_mobile:
+            self.navigation_bar = self._build_navigation_bar()
+
         # Assemble the shell layout with optional global background
         body = ft.Column(
             expand=True,
@@ -69,8 +74,9 @@ class ShellView(ft.View):
                 ],
             )
 
-        # On mobile devices, wrap in SafeArea to avoid status bar overlap
+        # On mobile devices, use SafeArea and set navigation bar
         if self._is_mobile:
+            self._page.navigation_bar = self.navigation_bar
             body = ft.SafeArea(
                 content=body,
                 avoid_intrusions_top=True,
@@ -161,6 +167,44 @@ class ShellView(ft.View):
                     ),
                 ],
             ),
+        )
+
+    def _build_navigation_bar(self):
+        """Build MD3-style bottom navigation bar for mobile.
+        
+        Returns:
+            A NavigationBar with Library, Playlists, and Settings destinations.
+        """
+        def on_nav_change(e):
+            selected_index = e.control.selected_index
+            if selected_index == 0:
+                self._page.run_task(self._page.push_route, "/library")
+            elif selected_index == 1:
+                self._page.run_task(self._page.push_route, "/playlists")
+            elif selected_index == 2:
+                self._page.run_task(self._page.push_route, "/settings")
+
+        return ft.NavigationBar(
+            selected_index=0,
+            on_change=on_nav_change,
+            label_behavior=ft.NavigationBarLabelBehavior.ALWAYS_SHOW,
+            destinations=[
+                ft.NavigationBarDestination(
+                    icon=ft.Icons.LIBRARY_MUSIC_OUTLINED,
+                    selected_icon=ft.Icons.LIBRARY_MUSIC,
+                    label=tr("library"),
+                ),
+                ft.NavigationBarDestination(
+                    icon=ft.Icons.PLAYLIST_PLAY_OUTLINED,
+                    selected_icon=ft.Icons.PLAYLIST_PLAY,
+                    label=tr("playlists"),
+                ),
+                ft.NavigationBarDestination(
+                    icon=ft.Icons.SETTINGS_OUTLINED,
+                    selected_icon=ft.Icons.SETTINGS,
+                    label=tr("settings"),
+                ),
+            ],
         )
 
     def _show_import_menu(self, e):
