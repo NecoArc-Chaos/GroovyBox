@@ -32,7 +32,14 @@ dist/
 .env
 venv/
 .venv/
-*test*.*
+
+# Test artifacts (ignore results, not test source)
+tests/__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
 # Flet build
 .flet/
 # Build config docs (local reference only)
@@ -40,3 +47,20 @@ venv/
 
 # Cursor
 .cursor/
+
+# Test artifacts (ignore results, not test source)
+tests/__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Ruff
+.ruff_cache/
+
+# mypy
+.mypy_cache/
+
+# Lock files (optional, keep if using deterministic builds)
+# requirements.lock
+# uv.lock

@@ -203,6 +203,12 @@ class GroovyBoxApp:
         if self._tray_manager:
             self._tray_manager.stop()
         self._is_closing = True
+        # Shut down audio player cleanly
+        if hasattr(self, 'audio_player') and self.audio_player:
+            try:
+                self.audio_player.shutdown()
+            except Exception as ex:
+                logger.warning(f"Audio player shutdown failed: {ex}")
         self.page.window.prevent_close = False
         try:
             await self.page.window.destroy()

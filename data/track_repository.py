@@ -83,7 +83,8 @@ def _copy_to_music_dir(src: str) -> str:
         try:
             shutil.copy2(src, dest)
             return dest
-        except Exception:
+        except Exception as ex:
+            logger.warning(f"Failed to copy {src} to music dir: {ex}")
             return src
     name, ext = os.path.splitext(filename)
     for counter in range(1, 999):
@@ -92,7 +93,8 @@ def _copy_to_music_dir(src: str) -> str:
             try:
                 shutil.copy2(src, alt)
                 return alt
-            except Exception:
+            except Exception as ex:
+                logger.warning(f"Failed to copy {src} to music dir: {ex}")
                 return src
     return src
 
@@ -115,7 +117,8 @@ def _generate_art_thumb(art_bytes: bytes, size: int = 128) -> Optional[bytes]:
         buf = io.BytesIO()
         img.save(buf, format="JPEG", quality=85)
         return buf.getvalue()
-    except Exception:
+    except Exception as ex:
+        logger.debug(f"Failed to generate art thumbnail: {ex}")
         return None
 
 
@@ -155,8 +158,8 @@ def _do_import(file_paths: List[str], conn, copy: bool = False) -> Tuple[int, Li
                         f.write(meta.art_bytes)
                     art_path = art_file
                     art_thumb = _generate_art_thumb(meta.art_bytes)
-                except Exception:
-                    pass
+                except Exception as ex:
+                    logger.warning(f"Failed to save album art for {path}: {ex}")
 
             conn.execute(
                 """INSERT OR IGNORE INTO tracks
@@ -167,7 +170,8 @@ def _do_import(file_paths: List[str], conn, copy: bool = False) -> Tuple[int, Li
             )
             conn.commit()
             imported += 1
-        except Exception:
+        except Exception as ex:
+            logger.warning(f"Failed to import {path}: {ex}")
             continue
     return imported, new_paths
 
@@ -254,8 +258,8 @@ def delete_track(track_id: int):
             if art and os.path.isfile(art):
                 try:
                     os.remove(art)
-                except Exception:
-                    pass
+                except Exception as ex:
+                    logger.warning(f"Failed to delete art file {art}: {ex}")
         conn.execute("DELETE FROM tracks WHERE id=?", (track_id,))
         conn.commit()
 
@@ -266,8 +270,8 @@ def clear_all_tracks():
         for f in os.listdir(art_dir):
             try:
                 os.remove(os.path.join(art_dir, f))
-            except Exception:
-                pass
+            except Exception as ex:
+                logger.warning(f"Failed to delete art file {f}: {ex}")
     with get_connection() as conn:
         conn.execute("DELETE FROM tracks")
         conn.commit()
@@ -325,8 +329,8 @@ def delete_tracks(track_ids: List[int]):
             if row and row["art_uri"] and os.path.isfile(row["art_uri"]):
                 try:
                     os.remove(row["art_uri"])
-                except Exception:
-                    pass
+                except Exception as ex:
+                    logger.warning(f"Failed to delete art file {row['art_uri']}: {ex}")
         conn.execute(f"DELETE FROM tracks WHERE id IN ({placeholders})", track_ids)
         conn.commit()
 
@@ -356,8 +360,8 @@ def _row_to_track(row) -> Track:
             with open(restored_path, "wb") as f:
                 f.write(art_thumb)
             art_uri = restored_path
-        except Exception:
-            pass
+        except Exception as ex:
+            logger.warning(f"Failed to restore art thumbnail for track {row['id']}: {ex}")
     return Track(
         id=row["id"],
         title=row["title"],

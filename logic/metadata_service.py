@@ -55,8 +55,8 @@ def get_metadata(file_path: str) -> TrackMetadata:
         # Extract embedded album art
         meta.art_bytes = _extract_art(audio)
 
-    except Exception:
-        pass
+    except Exception as ex:
+        logger.warning(f"Failed to extract metadata from {file_path}: {ex}")
 
     return meta
 
@@ -80,8 +80,8 @@ def _safe_tag(audio, key: str) -> Optional[str]:
             if isinstance(val, list) and len(val) > 0:
                 return str(val[0])
             return str(val)
-    except Exception:
-        pass
+    except Exception as ex:
+        logger.debug(f"Failed to read tag {key}: {ex}")
     return None
 
 
@@ -118,8 +118,8 @@ def _extract_art(audio) -> Optional[bytes]:
             if covr and len(covr) > 0:
                 return covr[0]
 
-    except Exception:
-        pass
+    except Exception as ex:
+        logger.debug(f"Failed to extract album art: {ex}")
     return None
 
 

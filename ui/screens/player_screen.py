@@ -1140,22 +1140,22 @@ class PlayerScreen(ft.Container):
             self._page.show_dialog(ft.SnackBar(ft.Text(tr("error").replace("{}", "No track info"))))
             return
         try:
-            import urllib.request
-            import urllib.parse
+            import httpx
             import json as _json
             url = ""
             if source == "lrclib":
-                safe = urllib.parse.quote(query)
-                url = f"https://lrclib.net/api/search?q={safe}"
+                url = f"https://lrclib.net/api/search?q={httpx.quote(query)}"
             elif source == "netease":
-                safe = urllib.parse.quote(query)
-                url = f"https://music.163.com/api/search/get?type=1&s={safe}"
+                url = f"https://music.163.com/api/search/get?type=1&s={httpx.quote(query)}"
             if not url:
                 self._page.show_dialog(ft.SnackBar(ft.Text(tr("noLyricsAvailable"))))
                 return
-            req = urllib.request.Request(url, headers={"User-Agent": "GroovyBox/1.0"})
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                data = _json.loads(resp.read().decode("utf-8"))
+            headers = {"User-Agent": "GroovyBox/1.0"}
+            timeout = httpx.Timeout(10.0)
+            with httpx.Client(headers=headers, timeout=timeout, follow_redirects=True) as client:
+                resp = client.get(url)
+                resp.raise_for_status()
+                data = _json.loads(resp.text)
             lyrics_text = None
             if source == "lrclib" and isinstance(data, list) and data:
                 lyrics_text = data[0].get("syncedLyrics") or data[0].get("plainLyrics")
@@ -1164,9 +1164,10 @@ class PlayerScreen(ft.Container):
                 if songs:
                     sid = songs[0]["id"]
                     lyric_url = f"https://music.163.com/api/song/lyric?os=pc&id={sid}&lv=-1&kv=-1&tv=-1"
-                    lreq = urllib.request.Request(lyric_url, headers={"User-Agent": "GroovyBox/1.0"})
-                    with urllib.request.urlopen(lreq, timeout=10) as lresp:
-                        ldata = _json.loads(lresp.read().decode("utf-8"))
+                    with httpx.Client(headers=headers, timeout=timeout, follow_redirects=True) as client:
+                        lresp = client.get(lyric_url)
+                        lresp.raise_for_status()
+                        ldata = _json.loads(lresp.text)
                     lyric_str = ldata.get("lrc", {}).get("lyric", "")
                     if lyric_str.strip():
                         lyrics_text = lyric_str

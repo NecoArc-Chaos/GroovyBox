@@ -48,6 +48,9 @@ class AudioPlayer:
         # UI event loop reference for thread-safe callbacks
         self._ui_loop: Optional[asyncio.AbstractEventLoop] = None
 
+        # Lock for thread-safe state mutations
+        self._state_lock = threading.Lock()
+
         # Callback functions for UI updates
         self.on_track_change: Optional[Callable] = None
         self.on_position_change: Optional[Callable] = None
@@ -64,10 +67,12 @@ class AudioPlayer:
     def _start_fa_timer(self):
         def _loop():
             while self._timer_active:
-                if self._is_playing:
-                    self._position_ms += 100
+                with self._state_lock:
+                    if self._is_playing:
+                        self._position_ms += 100
+                    pos = self._position_ms
                 if self.on_position_change:
-                    self._call_on_ui(self.on_position_change, self._position_ms)
+                    self._call_on_ui(self.on_position_change, pos)
                 time.sleep(0.1)
         self._fa_tick_thread = threading.Thread(target=_loop, daemon=True)
         self._fa_tick_thread.start()
@@ -78,8 +83,10 @@ class AudioPlayer:
         Starts playback once Flutter confirms the audio control is ready.
         page.update() flushes the play command to the Flutter side.
         """
-        self._loading = False
-        if self._is_playing:
+        with self._state_lock:
+            self._loading = False
+            is_playing = self._is_playing
+        if is_playing:
             asyncio.create_task(self._audio.play())
             self.page.update()
         if self.on_loading_change:
@@ -88,11 +95,13 @@ class AudioPlayer:
     def _fa_on_duration(self, e):
         """Handle duration change event from flet_audio."""
         if e.duration is not None:
-            self._duration_ms = e.duration.in_milliseconds
+            with self._state_lock:
+                self._duration_ms = e.duration.in_milliseconds
 
     def _fa_on_position(self, e):
         """Handle position change event from flet_audio."""
-        self._position_ms = e.position
+        with self._state_lock:
+            self._position_ms = e.position
 
     def _fa_on_state(self, e):
         """Handle state change event from flet_audio (detects track completion)."""
@@ -114,8 +123,8 @@ class AudioPlayer:
             mf = mutagen.File(path)
             if mf and mf.info:
                 return int(mf.info.length * 1000)
-        except Exception:
-            pass
+        except Exception as ex:
+            logger.debug(f"Failed to get duration for {path}: {ex}")
         return 0
 
     def _recreate_audio(self, path: str):
@@ -132,8 +141,8 @@ class AudioPlayer:
             try:
                 if self._audio in self.page.services:
                     self.page.services.remove(self._audio)
-            except Exception:
-                pass
+            except Exception as ex:
+                logger.debug(f"Failed to remove old audio service: {ex}")
             self.page.update()
 
         self._audio = FletAudio(
@@ -256,8 +265,9 @@ class AudioPlayer:
         if not os.path.exists(path):
             track_name = track.title or os.path.basename(path)
             logger.error(f"File not found: {path}")
-            self._loading = False
-            self._is_playing = False
+            with self._state_lock:
+                self._loading = False
+                self._is_playing = False
             if self.on_loading_change:
                 self._call_on_ui(self.on_loading_change, False)
             if self.on_play_state_change:
@@ -275,16 +285,20 @@ class AudioPlayer:
             self.current_index = -1
             return
 
-        self._loading = True
+        with self._state_lock:
+            self._loading = True
         if self.on_loading_change:
             self._call_on_ui(self.on_loading_change, True)
 
-        self._position_ms = 0
-        self._duration_ms = track.duration or self._fa_get_duration(path)
-        self._is_playing = True
+        duration = track.duration or self._fa_get_duration(path)
+        with self._state_lock:
+            self._position_ms = 0
+            self._duration_ms = duration
+            self._is_playing = True
         self._recreate_audio(path)
 
-        self._loading = False
+        with self._state_lock:
+            self._loading = False
 
         # Notify UI components of the changes
         if self.on_loading_change:
@@ -304,7 +318,8 @@ class AudioPlayer:
         """Restart the current track from the beginning."""
         if self.current_index >= 0 and self.current_index < len(self.queue):
             self.seek(0)
-            self._is_playing = True
+            with self._state_lock:
+                self._is_playing = True
             if self.on_play_state_change:
                 self._call_on_ui(self.on_play_state_change, True)
 
@@ -313,15 +328,19 @@ class AudioPlayer:
         
         If no track is loaded but the queue has items, starts playback.
         """
-        if self._is_playing:
+        with self._state_lock:
+            is_playing = self._is_playing
+        if is_playing:
             asyncio.create_task(self._audio.pause())
-            self._is_playing = False
+            with self._state_lock:
+                self._is_playing = False
             if self.on_play_state_change:
                 self._call_on_ui(self.on_play_state_change, False)
         else:
             if self.current_index >= 0 and self.current_index < len(self.queue):
                 asyncio.create_task(self._audio.resume())
-                self._is_playing = True
+                with self._state_lock:
+                    self._is_playing = True
                 if self.on_play_state_change:
                     self._call_on_ui(self.on_play_state_change, True)
             elif self.queue:
@@ -368,14 +387,17 @@ class AudioPlayer:
             position_ms: Target position in milliseconds.
         """
         asyncio.create_task(self._audio.seek(position_ms))
-        self._position_ms = position_ms
+        with self._state_lock:
+            self._position_ms = position_ms
         if self.on_position_change:
             self._call_on_ui(self.on_position_change, position_ms)
 
     def set_volume(self, volume: float):
-        self._volume = max(0.0, min(1.0, volume))
-        db.set_setting("player_volume", str(round(self._volume, 2)))
-        self._audio.volume = self._volume
+        with self._state_lock:
+            self._volume = max(0.0, min(1.0, volume))
+            vol = self._volume
+        db.set_setting("player_volume", str(round(vol, 2)))
+        self._audio.volume = vol
         self.page.update()
 
     def get_current_track(self) -> Optional[Track]:
@@ -403,7 +425,8 @@ class AudioPlayer:
             self.current_index = 0
             self._load_current()
         else:
-            self._is_playing = False
+            with self._state_lock:
+                self._is_playing = False
             if self.on_play_state_change:
                 self._call_on_ui(self.on_play_state_change, False)
             if self.on_loading_change:
