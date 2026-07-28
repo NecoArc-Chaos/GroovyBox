@@ -9,7 +9,7 @@ import contextlib
 import sqlite3
 import threading
 import os
-from typing import Optional
+
 
 
 # Global cached database path to avoid repeated path resolution
@@ -66,7 +66,7 @@ def get_db_path():
 @contextlib.contextmanager
 def get_connection():
     """Create and configure a new SQLite database connection.
-    
+
     Reuses a thread-local connection when available to reduce
     connect/close overhead for high-frequency operations.
     """

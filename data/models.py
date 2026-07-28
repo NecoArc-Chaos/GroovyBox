@@ -12,7 +12,7 @@ from typing import Optional
 @dataclass
 class Track:
     """Represents a music track stored in the database.
-    
+
     Attributes:
         id: Unique database identifier.
         title: Track title (defaults to filename if not available).
@@ -44,7 +44,7 @@ class Track:
 @dataclass
 class Playlist:
     """Represents a user-created playlist.
-    
+
     Attributes:
         id: Unique database identifier.
         name: Display name of the playlist.
@@ -58,7 +58,7 @@ class Playlist:
 @dataclass
 class AlbumData:
     """Represents an album grouping for display in the UI.
-    
+
     Attributes:
         album: Album name.
         artist: Primary artist name.
@@ -72,7 +72,7 @@ class AlbumData:
 @dataclass
 class ArtistAlbums:
     """Represents an artist with their associated albums.
-    
+
     Attributes:
         artist: Artist display name.
         albums: List of AlbumData objects belonging to this artist.
@@ -86,7 +86,7 @@ class ArtistAlbums:
 @dataclass
 class WatchFolder:
     """Represents a monitored music library folder.
-    
+
     Attributes:
         id: Unique database identifier.
         path: Absolute path to the folder.
@@ -108,7 +108,7 @@ class WatchFolder:
 @dataclass
 class SettingsState:
     """Represents application settings snapshot.
-    
+
     Attributes:
         auto_scan: Whether to automatically scan watch folders on startup.
         default_player_screen: Default view mode for the player (cover/lyrics/queue).
@@ -124,10 +124,10 @@ class SettingsState:
 @dataclass
 class CurrentTrackData:
     """Represents the currently playing track's runtime data.
-    
+
     This is a lightweight version of Track used for passing current
     playback information between the audio handler and UI components.
-    
+
     Attributes:
         id: Database ID of the track.
         title: Track title.
@@ -151,7 +151,7 @@ class CurrentTrackData:
 @dataclass
 class TrackMetadata:
     """Represents metadata extracted from an audio file.
-    
+
     Attributes:
         title: Track title from metadata tags.
         artist: Artist name from metadata tags.
@@ -167,7 +167,7 @@ class TrackMetadata:
 @dataclass
 class LyricsLine:
     """Represents a single line of lyrics.
-    
+
     Attributes:
         time_ms: Timestamp in milliseconds (None for unsynchronized lyrics).
         text: The lyrics text content.
@@ -179,7 +179,7 @@ class LyricsLine:
 @dataclass
 class LyricsData:
     """Represents a complete lyrics document.
-    
+
     Attributes:
         type: Lyrics format type - "timed" for synchronized, "plain" for static.
         lines: List of LyricsLine objects containing the lyrics content.

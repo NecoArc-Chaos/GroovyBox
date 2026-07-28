@@ -21,11 +21,11 @@ from logic.logger import logger
 
 class AudioPlayer:
     """Core audio playback engine for GroovyBox.
-    
+
     Manages a queue of tracks, handles play/pause/seek operations,
     and provides real-time position updates to the UI. Uses the
     flet_audio backend on all platforms.
-    
+
     Attributes:
         queue: List of Track objects in the playback queue.
         current_index: Index of the currently playing track in the queue.
@@ -111,10 +111,10 @@ class AudioPlayer:
 
     def _fa_get_duration(self, path: str) -> int:
         """Get duration using mutagen as fallback for flet_audio.
-        
+
         Args:
             path: Path to the audio file.
-        
+
         Returns:
             Duration in milliseconds, or 0 if unavailable.
         """
@@ -163,18 +163,18 @@ class AudioPlayer:
 
     async def capture_ui_loop(self):
         """Capture the UI event loop reference for thread-safe callbacks.
-        
+
         Called once during app initialization to store the running event loop.
         """
         self._ui_loop = asyncio.get_running_loop()
 
     def _call_on_ui(self, fn, *args):
         """Safely call a function on the UI thread.
-        
+
         Attempts multiple strategies to ensure the callback runs on the
         main UI thread: direct event loop call, stored loop reference,
         or direct invocation as fallback.
-        
+
         Args:
             fn: The callback function to invoke.
             *args: Arguments to pass to the function.
@@ -211,7 +211,7 @@ class AudioPlayer:
 
     def play_track(self, track: Track):
         """Play a single track, replacing the current queue.
-        
+
         Args:
             track: The Track object to play.
         """
@@ -228,7 +228,7 @@ class AudioPlayer:
 
     def play_tracks(self, tracks: List[Track], initial_index: int = 0):
         """Play a list of tracks starting from the specified index.
-        
+
         Args:
             tracks: List of Track objects to add to the queue.
             initial_index: Index in the list to start playing from.
@@ -251,7 +251,7 @@ class AudioPlayer:
 
     def _load_current(self):
         """Load and start playing the track at current_index.
-        
+
         Handles file existence check, metadata loading, and
         recreates the flet_audio instance with the new source. Triggers all
         registered callbacks for track change, play state, and queue updates.
@@ -325,7 +325,7 @@ class AudioPlayer:
 
     def toggle_play_pause(self):
         """Toggle between play and pause states.
-        
+
         If no track is loaded but the queue has items, starts playback.
         """
         with self._state_lock:
@@ -348,7 +348,7 @@ class AudioPlayer:
 
     def next(self):
         """Advance to the next track in the queue.
-        
+
         Respects shuffle and repeat modes:
         - shuffle: Random next track
         - repeat all: Wraps to beginning
@@ -370,7 +370,7 @@ class AudioPlayer:
 
     def previous(self):
         """Go back to the previous track in the queue.
-        
+
         Clamps to index 0 if already at the beginning.
         """
         if not self.queue:
@@ -382,7 +382,7 @@ class AudioPlayer:
 
     def seek(self, position_ms: int):
         """Seek to a specific position in the current track.
-        
+
         Args:
             position_ms: Target position in milliseconds.
         """
@@ -402,7 +402,7 @@ class AudioPlayer:
 
     def get_current_track(self) -> Optional[Track]:
         """Get the currently playing track object.
-        
+
         Returns:
             The current Track object, or None if no track is loaded.
         """
@@ -412,7 +412,7 @@ class AudioPlayer:
 
     def _on_track_ended(self):
         """Handle natural track completion.
-        
+
         Implements repeat-one, repeat-all, and sequential playback logic.
         Stops playback if at the end of the queue with no repeat.
         """

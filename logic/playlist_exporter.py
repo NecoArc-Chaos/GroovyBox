@@ -9,16 +9,21 @@ import os
 import shutil
 import tempfile
 import zipfile
-from typing import List, Optional
+from typing import List
 from data import playlist_repository as prepo
 from data.models import Track, Playlist
 
 
-def export_playlist(playlist_id: int, output_path: str, use_relpath: bool = False,
-                    include_lyrics: bool = False, include_covers: bool = False,
-                    as_zip: bool = False) -> str:
+def export_playlist(
+    playlist_id: int,
+    output_path: str,
+    use_relpath: bool = False,
+    include_lyrics: bool = False,
+    include_covers: bool = False,
+    as_zip: bool = False,
+) -> str:
     """Export a playlist to an M3U file or ZIP archive.
-    
+
     Args:
         playlist_id: Database ID of the playlist to export.
         output_path: Destination file path.
@@ -26,10 +31,10 @@ def export_playlist(playlist_id: int, output_path: str, use_relpath: bool = Fals
         include_lyrics: Whether to export lyrics files alongside the M3U.
         include_covers: Whether to export album art files.
         as_zip: Whether to package everything into a ZIP archive.
-    
+
     Returns:
         The output file path.
-    
+
     Raises:
         ValueError: If the playlist ID doesn't exist.
     """
@@ -54,13 +59,20 @@ def export_playlist(playlist_id: int, output_path: str, use_relpath: bool = Fals
                            use_relpath, include_lyrics, include_covers)
 
 
-def _export_m3u(playlist: Playlist, tracks: List[Track], output_path: str, out_dir: str,
-                use_relpath: bool, include_lyrics: bool, include_covers: bool) -> str:
+def _export_m3u(
+    playlist: Playlist,
+    tracks: List[Track],
+    output_path: str,
+    out_dir: str,
+    use_relpath: bool,
+    include_lyrics: bool,
+    include_covers: bool,
+) -> str:
     """Export tracks as an M3U playlist file.
-    
+
     Creates a standard M3U file with #EXTINF metadata lines.
     Optionally copies lyrics and cover art files to the output directory.
-    
+
     Args:
         playlist: The playlist object.
         tracks: List of tracks in the playlist.
@@ -69,7 +81,7 @@ def _export_m3u(playlist: Playlist, tracks: List[Track], output_path: str, out_d
         use_relpath: Whether to use relative paths.
         include_lyrics: Whether to export lyrics files.
         include_covers: Whether to export cover art files.
-    
+
     Returns:
         The output file path.
     """
@@ -101,14 +113,21 @@ def _export_m3u(playlist: Playlist, tracks: List[Track], output_path: str, out_d
     return output_path
 
 
-def _export_as_zip(playlist: Playlist, tracks: List[Track], output_path: str, out_dir: str,
-                   base_name: str, use_relpath: bool, include_lyrics: bool,
-                   include_covers: bool) -> str:
+def _export_as_zip(
+    playlist: Playlist,
+    tracks: List[Track],
+    output_path: str,
+    out_dir: str,
+    base_name: str,
+    use_relpath: bool,
+    include_lyrics: bool,
+    include_covers: bool,
+) -> str:
     """Export playlist as a ZIP archive containing M3U and audio files.
-    
+
     Creates a temporary directory, generates the M3U file, copies all
     audio files, then compresses everything into a ZIP archive.
-    
+
     Args:
         playlist: The playlist object.
         tracks: List of tracks in the playlist.
@@ -118,7 +137,7 @@ def _export_as_zip(playlist: Playlist, tracks: List[Track], output_path: str, ou
         use_relpath: Whether to use relative paths in M3U.
         include_lyrics: Whether to include lyrics files.
         include_covers: Whether to include cover art.
-    
+
     Returns:
         The output ZIP file path.
     """
@@ -155,12 +174,12 @@ def _export_as_zip(playlist: Playlist, tracks: List[Track], output_path: str, ou
 
 def _make_path(file_path: str, base_dir: str, use_relpath: bool) -> str:
     """Convert a file path to either absolute or relative form.
-    
+
     Args:
         file_path: The original file path.
         base_dir: Base directory for relative path calculation.
         use_relpath: Whether to return a relative path.
-    
+
     Returns:
         The converted path string.
     """
@@ -174,10 +193,10 @@ def _make_path(file_path: str, base_dir: str, use_relpath: bool) -> str:
 
 def _write_lyrics_file(path: str, lyrics_json: str):
     """Write lyrics data to an LRC file.
-    
+
     Converts JSON lyrics back to LRC format for timed lyrics,
     or plain text for unsynchronized lyrics.
-    
+
     Args:
         path: Output file path.
         lyrics_json: JSON string containing lyrics data.
