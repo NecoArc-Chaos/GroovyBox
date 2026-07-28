@@ -29,7 +29,7 @@
     }
   },
   "build": {
-    "flet_version": "0.85.3",
+    "flet_version": "0.86.1",
     "python_version": "3.12",
     "timeout_minutes": 60,
     "default_platforms": ["windows", "linux", "macos", "android", "ios"]

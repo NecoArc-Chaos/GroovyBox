@@ -254,5 +254,7 @@
   "closeConfirmExit": "Exit",
   "closeConfirmHide": "Hide to tray",
   "pressBackAgainToExit": "Press back again to exit",
-  "keyboardShortcutsNote": "↑ ↓ ← → shortcuts only work in the full-screen player. Tap a key to rebind, Esc to cancel."
+  "keyboardShortcutsNote": "↑ ↓ ← → shortcuts only work in the full-screen player. Tap a key to rebind, Esc to cancel.",
+  "retry": "Retry",
+  "startupFailedMessage": "The UI failed to load. Please retry."
 }

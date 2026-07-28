@@ -64,6 +64,26 @@ class LibraryScreen(ft.Column):
             self.controls = [self._build_large_layout() if is_large else self._build_mobile_layout()]
         except Exception as ex:
             logger.exception("LibraryScreen._build failed")
+            # Show a visible error state instead of a black screen
+            self.controls = [
+                ft.Container(
+                    expand=True,
+                    alignment=ft.Alignment(0, 0),
+                    padding=40,
+                    content=ft.Column(
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[
+                            ft.Icon(ft.Icons.WARNING_AMBER, size=48, color=ft.Colors.ERROR),
+                            ft.Text(tr("appName"), size=20, weight=ft.FontWeight.BOLD),
+                            ft.Text(str(ex), size=12, color=ft.Colors.ERROR),
+                            ft.ElevatedButton(
+                                tr("retry"),
+                                on_click=lambda e: (self._build(), self.update()),
+                            ),
+                        ],
+                    ),
+                )
+            ]
 
     def _build_large_layout(self):
         """Build desktop layout with NavigationRail sidebar.

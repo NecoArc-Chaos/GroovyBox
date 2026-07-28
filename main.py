@@ -70,14 +70,8 @@ def main(page: ft.Page):
         from app import GroovyBoxApp
         GroovyBoxApp(page)
 
-        # On Android, page.push_route via run_task can be unreliable during
-        # early startup. Force the initial route here so the library screen
-        # renders immediately instead of staying on a blank default route.
-        try:
-            if not page.views:
-                page.route = "/library"
-        except Exception:
-            pass
+        # NOTE: GroovyBoxApp.__init__ already sets page.route = "/library"
+        # and calls _sync_views().  No additional route manipulation needed here.
     except Exception as ex:
         traceback.print_exc()
         _show_error(page, "启动失败", ex)

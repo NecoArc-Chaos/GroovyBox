@@ -125,11 +125,24 @@ class GroovyBoxApp:
         # Use direct route assignment instead of run_task(push_route) because
         # the latter can be unreliable on Android during early startup when
         # the Flutter client is still initializing.
+        #
+        # NOTE: Setting page.route already fires _on_route_change -> _sync_views(),
+        # so we only call _sync_views() explicitly as a fallback in case the
+        # on_route_change handler was not invoked (some Flet versions defer it).
+        self._initial_views_synced = False
         try:
             page.route = "/library"
-            self._sync_views()
+            # _on_route_change may have already called _sync_views();
+            # only call again if it hasn't run yet (guards against double-render).
+            if not self._initial_views_synced:
+                self._sync_views()
         except Exception:
             logger.warning("Initial route sync failed", exc_info=True)
+            # Last-resort fallback: show a minimal library view
+            try:
+                self._show_fallback_view()
+            except Exception:
+                pass
         page.run_task(self._tray_watch)
         self._set_window_icon()
 
@@ -464,6 +477,44 @@ class GroovyBoxApp:
         self.page.title = tr("appName")
         self._sync_views()
 
+    def _show_fallback_view(self):
+        """Show a minimal fallback view when all routing fails.
+
+        This is the absolute last resort to prevent a black screen.
+        Displays a simple message and a retry button.
+        """
+        def on_retry(e):
+            self.page.views.clear()
+            self.page.route = "/library"
+            try:
+                self._sync_views()
+            except Exception:
+                logger.exception("Fallback retry also failed")
+
+        self.page.views.clear()
+        self.page.views.append(
+            ft.View(
+                route="/",
+                controls=[
+                    ft.Container(
+                        expand=True,
+                        alignment=ft.Alignment(0, 0),
+                        padding=40,
+                        content=ft.Column(
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            controls=[
+                                ft.Icon(ft.Icons.ERROR_OUTLINE, size=48, color=ft.Colors.ERROR),
+                                ft.Text(tr("appName"), size=24, weight=ft.FontWeight.BOLD),
+                                ft.Text(tr("startupFailedMessage")),
+                                ft.ElevatedButton(tr("retry"), on_click=on_retry),
+                            ],
+                        ),
+                    )
+                ],
+            )
+        )
+        self.page.update()
+
     def _refresh_ui(self):
         """Refresh the current UI state without full rebuild.
 
@@ -490,12 +541,21 @@ class GroovyBoxApp:
         except Exception as ex:
             logger.exception("Route change failed")
             # Fallback: try to show the library screen so the user sees
-            # something instead of a black screen.
-            try:
-                self.page.route = "/library"
-                self._sync_views()
-            except Exception:
-                pass
+            # something instead of a black screen.  Guard against
+            # infinite recursion by only retrying once per change.
+            if not getattr(self, "_route_fallback_active", False):
+                self._route_fallback_active = True
+                try:
+                    self.page.route = "/library"
+                    self._sync_views()
+                except Exception:
+                    logger.exception("Route fallback also failed")
+                    try:
+                        self._show_fallback_view()
+                    except Exception:
+                        pass
+                finally:
+                    self._route_fallback_active = False
 
     def _on_window_resize(self, e):
         """Handle window resize by notifying the current active screen."""
@@ -640,6 +700,9 @@ class GroovyBoxApp:
         - /live-sync: Lyrics sync mode (no-op, handled by player)
         """
         route = self.page.route
+
+        # Mark that views have been synced (guards against double-render on startup)
+        self._initial_views_synced = True
 
         # Player screen takes full page (no shell)
         if route == "/player":
