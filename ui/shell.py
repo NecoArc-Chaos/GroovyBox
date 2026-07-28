@@ -71,7 +71,11 @@ class ShellView(ft.View):
 
         # On mobile devices, wrap in SafeArea to avoid status bar overlap
         if self._is_mobile:
-            body = ft.SafeArea(body, top=True, bottom=False)
+            body = ft.SafeArea(
+                content=body,
+                avoid_intrusions_top=True,
+                avoid_intrusions_bottom=False,
+            )
 
         bg_wrapper = self._build_global_bg_wrapper(body)
         self.controls = [bg_wrapper] if bg_wrapper else [body]
