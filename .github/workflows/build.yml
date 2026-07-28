@@ -1,0 +1,314 @@
+name: Build GroovyBox
+
+on:
+  push:
+    branches: [main, master]
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'Platforms (comma-separated): windows, linux, macos, android, ios'
+        required: true
+        default: 'windows,linux,macos,android,ios'
+
+env:
+  FLET_VERSION: '0.85.3'
+
+jobs:
+  ci-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          pip install ruff
+          pip install flet==${{ env.FLET_VERSION }} flet-audio==${{ env.FLET_VERSION }}
+          pip install mutagen Pillow colorthief httpx
+      - name: Lint with ruff
+        run: ruff check logic/ data/ ui/ app.py main.py --select E,F,W
+      - name: Type check (basic)
+        run: |
+          python -m py_compile logic/audio_handler.py logic/metadata_service.py data/track_repository.py app.py main.py || true
+
+  windows:
+    if: contains(inputs.platforms, 'windows')
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          pip install flet==${{ env.FLET_VERSION }} flet-audio==${{ env.FLET_VERSION }}
+          pip install mutagen Pillow colorthief httpx
+      - name: Cache Flutter SDK
+        uses: actions/cache@v4
+        with:
+          path: ~/.flet/flutter
+          key: flutter-${{ env.FLET_VERSION }}
+      - name: Build
+        timeout-minutes: 60
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python scripts/do_build.py windows
+      - name: Install NSIS
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          choco install nsis -y --no-progress
+          Add-Content -Path $env:GITHUB_PATH -Value "C:\Program Files (x86)\NSIS"
+      - name: Package portable directory
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $dst = "dist/groovybox_portable"
+          New-Item -ItemType Directory -Path $dst -Force | Out-Null
+          if (Test-Path "build/windows") {
+            Copy-Item -Path "build/windows\*" -Destination $dst -Recurse -Force
+            Write-Host "Copied from build/windows"
+          } else {
+            Write-Warning "build/windows/ not found, searching build/ for output..."
+            $exe = Get-ChildItem -Recurse -Path "build" -Filter "*.exe" -ErrorAction SilentlyContinue |
+              Where-Object { $_.FullName -notmatch '\\\w+\.exe$' -and $_.DirectoryName -notmatch '\\bin$' } |
+              Select-Object -First 1
+            if (-not $exe) {
+              $exe = Get-ChildItem -Recurse -Path "build" -Filter "*.exe" -ErrorAction SilentlyContinue |
+                Select-Object -First 1
+            }
+            if ($exe) {
+              Copy-Item -Path "$($exe.DirectoryName)\*" -Destination $dst -Recurse -Force
+              Write-Host "Copied build output from $($exe.DirectoryName)"
+            } else {
+              Write-Warning "No build output found, portable directory will be empty"
+            }
+          }
+      - name: Build NSIS installer
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $nsis = "C:\Program Files (x86)\NSIS\makensis.exe"
+          if (-not (Test-Path $nsis)) { Write-Warning "NSIS not found at $nsis"; exit 0 }
+
+          # Ensure build/windows/ has content for NSIS
+          if (-not (Test-Path "build/windows") -or -not (Get-ChildItem "build/windows" -ErrorAction SilentlyContinue)) {
+            Write-Warning "build/windows/ missing or empty, searching for build output..."
+            if (Test-Path "dist/groovybox_portable") {
+              New-Item -ItemType Directory -Path "build/windows" -Force | Out-Null
+              Copy-Item -Path "dist/groovybox_portable\*" -Destination "build/windows" -Recurse -Force
+              Write-Host "Copied from dist/groovybox_portable"
+            } else {
+              $exe = Get-ChildItem -Recurse -Path "build" -Filter "*.exe" -ErrorAction SilentlyContinue |
+                Where-Object { $_.FullName -notmatch '\\\w+\.exe$' -and $_.DirectoryName -notmatch '\\bin$' } |
+                Select-Object -First 1
+              if (-not $exe) {
+                $exe = Get-ChildItem -Recurse -Path "build" -Filter "*.exe" -ErrorAction SilentlyContinue |
+                  Select-Object -First 1
+              }
+              if ($exe) {
+                New-Item -ItemType Directory -Path "build/windows" -Force | Out-Null
+                Copy-Item -Path "$($exe.DirectoryName)\*" -Destination "build/windows" -Recurse -Force
+                Write-Host "Copied build output from $($exe.DirectoryName)"
+              }
+            }
+          }
+
+          if (-not (Test-Path "build/windows") -or -not (Get-ChildItem "build/windows" -ErrorAction SilentlyContinue)) {
+            Write-Warning "No build output found, skipping NSIS installer"
+            exit 0
+          }
+
+          & $nsis scripts\package_windows.nsi
+          Write-Output "NSIS installer built successfully"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GroovyBox-Windows-Installer
+          path: dist\GroovyBox-Setup.exe
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GroovyBox-Windows-Portable
+          path: dist\groovybox_portable\
+          if-no-files-found: warn
+
+  linux:
+    if: contains(inputs.platforms, 'linux')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmpv-dev libgtk-3-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev liblzma-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+      - name: Install dependencies
+        run: |
+          pip install flet==${{ env.FLET_VERSION }} flet-audio==${{ env.FLET_VERSION }}
+          pip install mutagen Pillow colorthief httpx
+      - name: Cache Flutter SDK
+        uses: actions/cache@v4
+        with:
+          path: ~/.flet/flutter
+          key: flutter-${{ env.FLET_VERSION }}
+      - name: Build
+        timeout-minutes: 60
+        run: python scripts/do_build.py linux
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GroovyBox-Linux
+          path: build/linux/**
+          if-no-files-found: error
+
+  macos:
+    if: contains(inputs.platforms, 'macos')
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          pip install flet==${{ env.FLET_VERSION }} flet-audio==${{ env.FLET_VERSION }}
+          pip install mutagen Pillow colorthief httpx
+      - name: Cache Flutter SDK
+        uses: actions/cache@v4
+        with:
+          path: ~/.flet/flutter
+          key: flutter-${{ env.FLET_VERSION }}
+      - name: Build
+        timeout-minutes: 60
+        run: python scripts/do_build.py macos
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GroovyBox-macOS
+          path: build/macos/**
+          if-no-files-found: error
+
+  android:
+    if: contains(inputs.platforms, 'android')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install dependencies
+        run: |
+          pip install flet==${{ env.FLET_VERSION }} flet-audio==${{ env.FLET_VERSION }}
+          pip install mutagen Pillow colorthief httpx flet-permission-handler
+      - name: Cache Flutter SDK
+        uses: actions/cache@v4
+        with:
+          path: ~/.flet/flutter
+          key: flutter-${{ env.FLET_VERSION }}
+      - name: Decode keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE }}
+        if: env.KEYSTORE_B64 != ''
+        run: echo "$KEYSTORE_B64" | base64 -d > keystore.jks
+      - name: Build
+        timeout-minutes: 60
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: python scripts/do_build.py apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GroovyBox-Android
+          path: build/apk/*.apk
+          if-no-files-found: error
+
+  ios:
+    if: contains(inputs.platforms, 'ios')
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          pip install flet==${{ env.FLET_VERSION }} flet-audio==${{ env.FLET_VERSION }}
+          pip install mutagen Pillow colorthief httpx
+      - name: Cache Flutter SDK
+        uses: actions/cache@v4
+        with:
+          path: ~/.flet/flutter
+          key: flutter-${{ env.FLET_VERSION }}
+      - name: Decode certificate
+        env:
+          IOS_CERTIFICATE_P12: ${{ secrets.IOS_CERTIFICATE_P12 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+        if: env.IOS_CERTIFICATE_P12 != ''
+        run: |
+          echo "$IOS_CERTIFICATE_P12" | base64 -d > certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -hex 16)
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security import certificate.p12 -P "$IOS_CERTIFICATE_PASSWORD" -A \
+            -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
+          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
+      - name: Decode provisioning profile
+        env:
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+        if: env.IOS_PROVISIONING_PROFILE != ''
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "$IOS_PROVISIONING_PROFILE" | base64 -d > profile.mobileprovision
+          UUID=$(security cms -D -i profile.mobileprovision | \
+            xmllint --xpath "string(//key[.='UUID']/following-sibling::string[1])" -)
+          cp profile.mobileprovision \
+            ~/Library/MobileDevice/Provisioning\ Profiles/${UUID}.mobileprovision
+          echo "IOS_PROVISIONING_PROFILE_NAME=$UUID" >> $GITHUB_ENV
+      - name: Build
+        timeout-minutes: 60
+        env:
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          IOS_SIGNING_CERTIFICATE: "Apple Distribution"
+        run: python scripts/do_build.py ipa
+      - name: Set signing flag
+        env:
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+        run: |
+          if [ -n "$IOS_TEAM_ID" ]; then
+            echo "HAS_SIGNING=1" >> $GITHUB_ENV
+          else
+            echo "HAS_SIGNING=0" >> $GITHUB_ENV
+          fi
+      - name: Package unsigned IPA
+        if: env.HAS_SIGNING == '0'
+        run: |
+          APP_PATH=$(find build/ipa -name "*.app" -path "*/Products/Applications/*" | head -1)
+          if [ -n "$APP_PATH" ]; then
+            mkdir -p build/ipa/Payload
+            cp -r "$APP_PATH" build/ipa/Payload/
+            cd build/ipa && zip -r -y GroovyBox-unsigned.ipa Payload
+            rm -rf Payload
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GroovyBox-iOS
+          path: build/ipa/*.ipa
+          if-no-files-found: warn
