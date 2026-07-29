@@ -43,6 +43,7 @@ class LibraryScreen(ft.Column):
         self.selected_tab = 0
         self._sel_tile_refs = {}
         self._sel_count_text = None
+        self._search_timer = None
         self._build()
 
     def _get_app(self):
@@ -51,6 +52,17 @@ class LibraryScreen(ft.Column):
 
     def on_window_size_changed(self):
         """Handle window resize by rebuilding the layout."""
+        self._build()
+        self.update()
+
+    def _search_debounce(self):
+        """Debounce search input to avoid rebuilding on every keystroke."""
+        if self._search_timer:
+            self._search_timer.cancel()
+        self._search_timer = self._page.run_task(self._do_search)
+
+    async def _do_search(self):
+        """Execute search after debounce delay."""
         self._build()
         self.update()
 
@@ -213,6 +225,7 @@ class LibraryScreen(ft.Column):
         is_sel_mode = bool(self.selected_ids)
 
         missing_tracks = [t for t in all_tracks if not os.path.isfile(t.path)]
+        missing_set = {t.id for t in missing_tracks}
         missing_count = len(missing_tracks)
 
         # Build search hint text with track counts
@@ -245,6 +258,7 @@ class LibraryScreen(ft.Column):
                     dense=True,
                     value=self.search_query,
                     on_submit=on_search,
+                    on_change=on_search_change,
                     filled=True,
                     fill_color=ft.Colors.with_opacity(0.08, ft.Colors.ON_SURFACE),
                 ),
@@ -297,13 +311,13 @@ class LibraryScreen(ft.Column):
             main = ft.ListView(
                 spacing=2,
                 padding=ft.Padding(0, 72, 0, 16),
-                controls=self._build_selection_tiles(tracks),
+                controls=self._build_selection_tiles(tracks, missing_set),
             )
         else:
             main = ft.ListView(
                 spacing=2,
                 padding=ft.Padding(0, 100 if missing_banner else 72, 0, 16),
-                controls=self._build_track_tiles(tracks),
+                controls=self._build_track_tiles(tracks, missing_set),
             )
 
         overlay_controls = [ft.Container(top=0, left=0, right=0, content=top_bar)]
@@ -495,20 +509,23 @@ class LibraryScreen(ft.Column):
             tiles.append(tile)
         return tiles
 
-    def _build_selection_tiles(self, tracks):
+    def _build_selection_tiles(self, tracks, missing_set=None):
         """Build track tiles with checkboxes for multi-select mode.
 
         Args:
             tracks: List of tracks to display.
+            missing_set: Pre-computed set of missing track IDs.
 
         Returns:
             List of Container widgets with checkboxes.
         """
+        if missing_set is None:
+            missing_set = set()
         tiles = []
         self._sel_tile_refs.clear()
         for t in tracks:
             is_sel = t.id in self.selected_ids
-            is_missing = not os.path.isfile(t.path)
+            is_missing = t.id in missing_set
             checkbox = ft.Checkbox(
                 value=is_sel,
                 label=t.title,
