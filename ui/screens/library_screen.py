@@ -258,7 +258,7 @@ class LibraryScreen(ft.Column):
                     dense=True,
                     value=self.search_query,
                     on_submit=on_search,
-                    on_change=on_search_change,
+                    on_change=lambda e: self._search_debounce(),
                     filled=True,
                     fill_color=ft.Colors.with_opacity(0.08, ft.Colors.ON_SURFACE),
                 ),
@@ -486,21 +486,24 @@ class LibraryScreen(ft.Column):
                 continue
         return result
 
-    def _build_track_tiles(self, tracks):
+    def _build_track_tiles(self, tracks, missing_set=None):
         """Build track tile widgets for the normal view.
-        
+
         Args:
             tracks: List of tracks to display.
-        
+            missing_set: Pre-computed set of missing track IDs.
+
         Returns:
             List of TrackTile widgets.
         """
+        if missing_set is None:
+            missing_set = set()
         tiles = []
         for t in tracks:
             tile = TrackTile(
                 track=t,
                 show_trailing=True,
-                is_missing=not os.path.isfile(t.path),
+                is_missing=t.id in missing_set,
                 on_tap=lambda e, trk=t: self._play_track(trk),
                 on_long_press=lambda e, trk=t: self._toggle_select(trk.id),
                 on_trailing_pressed=lambda e, trk=t: self._show_track_options(trk),
