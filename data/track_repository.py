@@ -10,7 +10,6 @@ import asyncio
 import io
 import os
 import shutil
-from datetime import datetime
 from typing import List, Optional, Tuple
 import threading
 from data.db import get_connection, get_app_dir, is_mobile
@@ -101,11 +100,11 @@ def _copy_to_music_dir(src: str) -> str:
 
 def _generate_art_thumb(art_bytes: bytes, size: int = 128) -> Optional[bytes]:
     """Generate a JPEG thumbnail from raw album art bytes.
-    
+
     Args:
         art_bytes: Raw image bytes.
         size: Maximum dimension for the thumbnail.
-    
+
     Returns:
         JPEG thumbnail bytes, or None if generation fails.
     """
@@ -279,12 +278,12 @@ def clear_all_tracks():
 
 def get_missing_tracks(since: Optional[str] = None) -> List[Track]:
     """Find tracks whose files are missing on disk.
-    
+
     Args:
         since: Optional ISO timestamp. Only check tracks with
                last_checked older than this value (or never checked).
                Pass None for a full scan.
-    
+
     Returns:
         List of Track objects with missing files.
     """
@@ -306,7 +305,7 @@ def get_missing_tracks(since: Optional[str] = None) -> List[Track]:
 
 def update_last_checked_since(old_time: str, new_time: str):
     """Update last_checked for all tracks checked since a given time.
-    
+
     Args:
         old_time: The previous check timestamp.
         new_time: The new timestamp to set.
@@ -342,10 +341,10 @@ def count_tracks() -> int:
 
 def _row_to_track(row) -> Track:
     """Convert a database row to a Track dataclass instance.
-    
+
     Args:
         row: A sqlite3.Row object from a tracks table query.
-    
+
     Returns:
         A Track instance with values from the row.
     """

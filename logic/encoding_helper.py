@@ -13,13 +13,13 @@ COMMON_ENCODINGS = ["utf-8", "gbk", "shift-jis", "euc-kr", "latin-1", "big5", "e
 
 def _detect_with_chardet(path):
     """Detect file encoding using the chardet library.
-    
+
     Reads up to 8KB of the file for analysis. Only returns a result
     if confidence exceeds 50%.
-    
+
     Args:
         path: Path to the text file.
-    
+
     Returns:
         Detected encoding name, or None if detection fails.
     """
@@ -39,13 +39,13 @@ def _detect_with_chardet(path):
 
 def _detect_by_bom(path):
     """Detect file encoding by Byte Order Mark (BOM).
-    
+
     Checks the first few bytes of the file for UTF-8, UTF-16 LE,
     or UTF-16 BE BOM signatures.
-    
+
     Args:
         path: Path to the text file.
-    
+
     Returns:
         Encoding name based on BOM, or None if no BOM found.
     """
@@ -62,15 +62,15 @@ def _detect_by_bom(path):
 
 def detect_encoding(path):
     """Detect the encoding of a text file.
-    
+
     Uses a multi-strategy approach:
     1. Check for BOM (Byte Order Mark)
     2. Try chardet library for statistical detection
     3. Try common encodings sequentially
-    
+
     Args:
         path: Path to the text file.
-    
+
     Returns:
         Detected encoding name, defaults to "utf-8" if all else fails.
     """
@@ -98,14 +98,14 @@ def detect_encoding(path):
 
 def read_with_encoding(path, encoding_hint=None):
     """Read a text file with automatic encoding detection.
-    
+
     Tries the provided hint first, then falls back to auto-detection.
     Uses error replacement to handle any remaining encoding issues.
-    
+
     Args:
         path: Path to the text file.
         encoding_hint: Optional encoding to try first.
-    
+
     Returns:
         File content as a string.
     """

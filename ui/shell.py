@@ -32,12 +32,23 @@ class ShellView(ft.View):
         super().__init__(route="/", padding=0, spacing=0)
         self._page = page
         self.app = page.session.store.get("app")
-        self._is_mobile = page.width < 600
-        self._swipe_back_started = False
+        # page.width can be None during early Android initialization.
+        # Default to mobile layout (True) when size is unknown; it will
+        # self-correct on the first resize event once the Flutter client
+        # reports the real viewport size.
+        # Use platform detection as a secondary guard: SafeArea and
+        # navigation_bar should only be applied on actual mobile platforms,
+        # not on desktop windows that happen to be narrow.
+        self._is_mobile = self._detect_mobile(page)
 
         # Main content area and mini player
         self.content_view = ft.Column(expand=True, spacing=0)
         self.mini_player = MiniPlayerWidget(page)
+
+        # Build navigation bar for mobile (MD3 style)
+        self.navigation_bar = None
+        if self._is_mobile:
+            self.navigation_bar = self._build_navigation_bar()
 
         # Assemble the shell layout with optional global background
         body = ft.Column(
@@ -65,8 +76,51 @@ class ShellView(ft.View):
                 ],
             )
 
+        # On mobile devices, use SafeArea and set navigation bar
+        if self._is_mobile:
+            self._page.navigation_bar = self.navigation_bar
+            body = ft.SafeArea(
+                content=body,
+                avoid_intrusions_top=True,
+                avoid_intrusions_bottom=False,
+            )
+
         bg_wrapper = self._build_global_bg_wrapper(body)
         self.controls = [bg_wrapper] if bg_wrapper else [body]
+
+    @staticmethod
+    def _detect_mobile(page: ft.Page) -> bool:
+        """Detect whether the current platform is a mobile device.
+
+        Uses page.width as primary signal, falling back to platform
+        detection when width is None (early init) or when the window
+        is intentionally narrow on desktop.
+        """
+        try:
+            w = page.width
+            if w is not None and w >= 600:
+                return False
+            if w is not None and w < 600:
+                # Narrow window — could be mobile or resized desktop.
+                # Use platform string as tie-breaker.
+                return ShellView._platform_is_mobile(page)
+            # width is None: early init. Guess from platform.
+            return ShellView._platform_is_mobile(page)
+        except Exception:
+            return False
+
+    @staticmethod
+    def _platform_is_mobile(page: ft.Page) -> bool:
+        """Return True if the page platform indicates a mobile device."""
+        try:
+            platform = getattr(page, "platform", None) or getattr(page, "platform_type", None)
+            if platform is None:
+                return False
+            p = str(platform).lower()
+            mobile_platforms = ("android", "ios", "iphone", "ipad")
+            return any(m in p for m in mobile_platforms)
+        except Exception:
+            return False
 
     @property
     def page(self):
@@ -111,6 +165,14 @@ class ShellView(ft.View):
 
     def on_window_size_changed(self):
         """Handle window resize by refreshing the mini player layout."""
+        # Re-detect mobile/desktop and rebuild shell if the category changed
+        new_is_mobile = self._detect_mobile(self._page)
+        if new_is_mobile != self._is_mobile:
+            self._is_mobile = new_is_mobile
+            # Rebuild the entire shell layout
+            if self.app:
+                self.app._reload_ui()
+            return
         if hasattr(self.mini_player, 'on_window_size_changed'):
             self.mini_player.on_window_size_changed()
 
@@ -149,6 +211,44 @@ class ShellView(ft.View):
                     ),
                 ],
             ),
+        )
+
+    def _build_navigation_bar(self):
+        """Build MD3-style bottom navigation bar for mobile.
+        
+        Returns:
+            A NavigationBar with Library, Playlists, and Settings destinations.
+        """
+        def on_nav_change(e):
+            selected_index = e.control.selected_index
+            if selected_index == 0:
+                self._page.run_task(self._page.push_route, "/library")
+            elif selected_index == 1:
+                self._page.run_task(self._page.push_route, "/playlists")
+            elif selected_index == 2:
+                self._page.run_task(self._page.push_route, "/settings")
+
+        return ft.NavigationBar(
+            selected_index=0,
+            on_change=on_nav_change,
+            label_behavior=ft.NavigationBarLabelBehavior.ALWAYS_SHOW,
+            destinations=[
+                ft.NavigationBarDestination(
+                    icon=ft.Icons.LIBRARY_MUSIC_OUTLINED,
+                    selected_icon=ft.Icons.LIBRARY_MUSIC,
+                    label=tr("library"),
+                ),
+                ft.NavigationBarDestination(
+                    icon=ft.Icons.PLAYLIST_PLAY_OUTLINED,
+                    selected_icon=ft.Icons.PLAYLIST_PLAY,
+                    label=tr("playlists"),
+                ),
+                ft.NavigationBarDestination(
+                    icon=ft.Icons.SETTINGS_OUTLINED,
+                    selected_icon=ft.Icons.SETTINGS,
+                    label=tr("settings"),
+                ),
+            ],
         )
 
     def _show_import_menu(self, e):

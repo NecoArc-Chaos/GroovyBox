@@ -59,10 +59,31 @@ class LibraryScreen(ft.Column):
         Chooses between large (rail) and mobile (tabs) layout based on width.
         """
         try:
-            is_large = self._page.width > 600
+            width = self._page.width or 0
+            is_large = width > 600
             self.controls = [self._build_large_layout() if is_large else self._build_mobile_layout()]
         except Exception as ex:
             logger.exception("LibraryScreen._build failed")
+            # Show a visible error state instead of a black screen
+            self.controls = [
+                ft.Container(
+                    expand=True,
+                    alignment=ft.Alignment(0, 0),
+                    padding=40,
+                    content=ft.Column(
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[
+                            ft.Icon(ft.Icons.WARNING_AMBER, size=48, color=ft.Colors.ERROR),
+                            ft.Text(tr("appName"), size=20, weight=ft.FontWeight.BOLD),
+                            ft.Text(str(ex), size=12, color=ft.Colors.ERROR),
+                            ft.ElevatedButton(
+                                tr("retry"),
+                                on_click=lambda e: (self._build(), self.update()),
+                            ),
+                        ],
+                    ),
+                )
+            ]
 
     def _build_large_layout(self):
         """Build desktop layout with NavigationRail sidebar.
@@ -70,11 +91,12 @@ class LibraryScreen(ft.Column):
         Returns:
             A Row with NavigationRail on the left and content on the right.
         """
+        width = self._page.width or 0
         nav = ft.NavigationRail(
             selected_index=self.selected_tab,
             on_change=self._on_nav_change,
             bgcolor=ft.Colors.TRANSPARENT,
-            extended=self._page.width > 800,
+            extended=width > 800,
             destinations=[
                 ft.NavigationRailDestination(icon=ft.Icons.AUDIOTRACK, label=ft.Text(tr("tracks"))),
                 ft.NavigationRailDestination(icon=ft.Icons.ALBUM, label=ft.Text(tr("albums"))),
@@ -199,9 +221,9 @@ class LibraryScreen(ft.Column):
             if self.search_query:
                 q = self.search_query.lower()
                 filtered = sum(1 for t in all_tracks if q in t.title.lower() or (t.artist and q in t.artist.lower()) or (t.album and q in t.album.lower()))
-                search_hint = tr("searchTracksFiltered").replace("{}", str(filtered)).replace("{}", str(len(all_tracks)))
+                search_hint = tr("searchTracksFiltered", filtered, len(all_tracks))
             else:
-                search_hint = tr("searchTracksWithCount").replace("{}", str(len(all_tracks)))
+                search_hint = tr("searchTracksWithCount", len(all_tracks))
 
         def on_search(e):
             """Handle search field submission."""

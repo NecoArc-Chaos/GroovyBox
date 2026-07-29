@@ -9,7 +9,7 @@ import asyncio
 import json
 import time
 from datetime import datetime
-from typing import List, Optional
+from typing import List
 import flet as ft
 from logic.logger import logger
 from logic.localize import tr, load_locale
@@ -23,11 +23,11 @@ import os
 
 class GroovyBoxApp:
     """Main application controller for GroovyBox.
-    
+
     Responsible for initializing the database, loading user preferences,
     setting up the audio player, and managing navigation between screens.
     Acts as the central hub connecting the audio engine, data layer, and UI.
-    
+
     Attributes:
         page: The Flet page instance.
         current_track: Currently playing track data (CurrentTrackData or None).
@@ -83,8 +83,9 @@ class GroovyBoxApp:
         page.on_route_change = self._on_route_change
         page.on_view_pop = self._on_view_pop
 
-        # Track last window size and register resize listener
-        self._last_window_width = page.width
+        # Track last window size and register resize listener.
+        # page.width can be None on Android during early init; treat as 0.
+        self._last_window_width = page.width or 0
         page.on_resize = self._on_window_resize
 
         # Global keyboard shortcuts for desktop
@@ -120,10 +121,31 @@ class GroovyBoxApp:
             except Exception:
                 logger.warning("window.on_event not supported")
 
-        # Navigate to the library screen as the initial view
-        page.run_task(page.push_route, "/library")
+        # Navigate to the library screen as the initial view.
+        # Setting page.route triggers _on_route_change -> _sync_views().
+        # Defer the fallback _sync_views() to the next event-loop iteration
+        # so the Flutter client has time to finish initializing on mobile.
+        # This avoids a black screen caused by calling page.update() too early.
+        self._initial_views_synced = False
+        try:
+            page.route = "/library"
+        except Exception:
+            logger.warning("Initial route assignment failed", exc_info=True)
+        page.run_task(self._delayed_initial_sync)
         page.run_task(self._tray_watch)
         self._set_window_icon()
+
+    async def _delayed_initial_sync(self):
+        """Fallback sync if _on_route_change didn't fire or didn't complete."""
+        if not self._initial_views_synced:
+            try:
+                self._sync_views()
+            except Exception:
+                logger.warning("Delayed initial sync failed", exc_info=True)
+                try:
+                    self._show_fallback_view()
+                except Exception:
+                    pass
 
     def _is_dark_mode(self):
         if self.theme_mode == ft.ThemeMode.DARK:
@@ -264,7 +286,12 @@ class GroovyBoxApp:
                 content=ft.Text(msg),
                 actions=[
                     ft.TextButton(tr("ignore"), on_click=lambda e: self.page.pop_dialog()),
-                    ft.FilledButton(tr("removeAllMissing"), bgcolor=ft.Colors.RED, color=ft.Colors.WHITE, on_click=do_remove),
+                    ft.FilledButton(
+                        tr("removeAllMissing"),
+                        bgcolor=ft.Colors.RED,
+                        color=ft.Colors.WHITE,
+                        on_click=do_remove,
+                    ),
                 ],
             )
             self.page.show_dialog(dlg)
@@ -323,10 +350,10 @@ class GroovyBoxApp:
 
     def _on_track_change(self, track_data):
         """Handle track change events from the audio player.
-        
+
         Updates the current track reference, loads metadata (including album art),
         and refreshes all UI components.
-        
+
         Args:
             track_data: CurrentTrackData instance with the new track info.
         """
@@ -341,9 +368,9 @@ class GroovyBoxApp:
 
     def _on_play_state_change(self, playing):
         """Handle play/pause state changes.
-        
+
         Updates the mini player and full player screen play button icon.
-        
+
         Args:
             playing: True if currently playing, False if paused.
         """
@@ -357,9 +384,9 @@ class GroovyBoxApp:
 
     def _on_position_change(self, pos_ms):
         """Handle playback position updates.
-        
+
         Updates progress bars in both the mini player and full player screen.
-        
+
         Args:
             pos_ms: Current playback position in milliseconds.
         """
@@ -373,10 +400,10 @@ class GroovyBoxApp:
 
     def _on_missing_tracks(self, names: List[str], from_user: bool):
         """Handle missing track files during playback.
-        
+
         Shows an AlertDialog for explicit user actions (play/queue),
         or a SnackBar for automatic navigation skips.
-        
+
         Args:
             names: List of missing track display names.
             from_user: True if triggered by explicit user action.
@@ -406,10 +433,10 @@ class GroovyBoxApp:
 
     def _call_player_method(self, method_name, *args):
         """Call a method on the PlayerScreen if it's the current top view.
-        
+
         This allows the app to push updates directly to the player screen
         without maintaining a direct reference to it.
-        
+
         Args:
             method_name: Name of the method to call on PlayerScreen.
             *args: Arguments to pass to the method.
@@ -424,10 +451,10 @@ class GroovyBoxApp:
 
     def _update_metadata(self, path):
         """Load and cache metadata for the currently playing track.
-        
+
         Extracts title, artist, album, and cover art from the audio file.
         Falls back to stored album art if extraction yields no results.
-        
+
         Args:
             path: File path of the audio track.
         """
@@ -451,9 +478,47 @@ class GroovyBoxApp:
         self.page.title = tr("appName")
         self._sync_views()
 
+    def _show_fallback_view(self):
+        """Show a minimal fallback view when all routing fails.
+
+        This is the absolute last resort to prevent a black screen.
+        Displays a simple message and a retry button.
+        """
+        def on_retry(e):
+            self.page.views.clear()
+            self.page.route = "/library"
+            try:
+                self._sync_views()
+            except Exception:
+                logger.exception("Fallback retry also failed")
+
+        self.page.views.clear()
+        self.page.views.append(
+            ft.View(
+                route="/",
+                controls=[
+                    ft.Container(
+                        expand=True,
+                        alignment=ft.Alignment(0, 0),
+                        padding=40,
+                        content=ft.Column(
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            controls=[
+                                ft.Icon(ft.Icons.ERROR_OUTLINE, size=48, color=ft.Colors.ERROR),
+                                ft.Text(tr("appName"), size=24, weight=ft.FontWeight.BOLD),
+                                ft.Text(tr("startupFailedMessage")),
+                                ft.ElevatedButton(tr("retry"), on_click=on_retry),
+                            ],
+                        ),
+                    )
+                ],
+            )
+        )
+        self.page.update()
+
     def _refresh_ui(self):
         """Refresh the current UI state without full rebuild.
-        
+
         Updates the content view, mini player, and player screen
         to reflect the latest playback state.
         """
@@ -468,16 +533,35 @@ class GroovyBoxApp:
 
     def _on_route_change(self, e):
         """Handle route changes by synchronizing views.
-        
+
         Args:
             e: Route change event from the Flet framework.
         """
-        self._sync_views()
+        try:
+            self._sync_views()
+        except Exception as ex:
+            logger.exception("Route change failed")
+            # Fallback: try to show the library screen so the user sees
+            # something instead of a black screen.  Guard against
+            # infinite recursion by only retrying once per change.
+            if not getattr(self, "_route_fallback_active", False):
+                self._route_fallback_active = True
+                try:
+                    self.page.route = "/library"
+                    self._sync_views()
+                except Exception:
+                    logger.exception("Route fallback also failed")
+                    try:
+                        self._show_fallback_view()
+                    except Exception:
+                        pass
+                finally:
+                    self._route_fallback_active = False
 
     def _on_window_resize(self, e):
         """Handle window resize by notifying the current active screen."""
         try:
-            current_width = self.page.width
+            current_width = self.page.width or 0
             if current_width == self._last_window_width:
                 return
             self._last_window_width = current_width
@@ -518,13 +602,13 @@ class GroovyBoxApp:
 
     def _on_global_keyboard(self, e: ft.KeyboardEvent):
         """Handle global keyboard shortcuts across all screens.
-        
+
         Global shortcuts (work everywhere):
         - Space: Toggle play/pause
         - N: Next track
         - B: Previous track
         - Escape: Exit player screen
-        
+
         Player-screen-only shortcuts:
         - Arrow Up/Down: Volume +/-5%
         - Arrow Left/Right: Seek +/-5s
@@ -580,7 +664,7 @@ class GroovyBoxApp:
 
     async def _on_view_pop(self, e):
         """Handle back navigation or prompt to exit on main page.
-        
+
         Pops the top view if there are multiple views.
         On mobile with a single view, shows "press again to exit" toast.
         Desktop: no-op on single view.
@@ -605,7 +689,7 @@ class GroovyBoxApp:
 
     def _sync_views(self):
         """Synchronize the page views with the current route.
-        
+
         This is the main routing logic that determines which screen to display
         based on the URL route. Handles:
         - /player: Full-screen player view
@@ -682,3 +766,6 @@ class GroovyBoxApp:
         self.page.views.append(self.shell)
         self.shell.mini_player.refresh()
         self.page.update()
+
+        # Mark that views have been synced (guards against double-render on startup)
+        self._initial_views_synced = True

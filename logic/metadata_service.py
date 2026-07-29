@@ -8,12 +8,8 @@ mutagen library for cross-format metadata support.
 import os
 from typing import Optional
 from mutagen import File as MutagenFile
-from mutagen.mp3 import MP3
-from mutagen.flac import FLAC
-from mutagen.oggvorbis import OggVorbis
-from mutagen.mp4 import MP4
-from mutagen.apev2 import APEv2File
 from data.models import TrackMetadata
+from logic.logger import logger
 
 # Supported audio file extensions for metadata extraction
 SUPPORTED_EXTENSIONS = {
@@ -23,14 +19,14 @@ SUPPORTED_EXTENSIONS = {
 
 def get_metadata(file_path: str) -> TrackMetadata:
     """Extract metadata from an audio file.
-    
+
     Reads title, artist, album, duration, and embedded album art
     from the audio file using mutagen. Returns empty metadata if
     the file cannot be read.
-    
+
     Args:
         file_path: Absolute path to the audio file.
-    
+
     Returns:
         A TrackMetadata instance with extracted information.
     """
@@ -63,14 +59,14 @@ def get_metadata(file_path: str) -> TrackMetadata:
 
 def _safe_tag(audio, key: str) -> Optional[str]:
     """Safely extract a tag value from an audio file.
-    
+
     Handles various tag formats (single value, list) and
     returns None if the tag doesn't exist or can't be read.
-    
+
     Args:
         audio: The mutagen audio file object.
         key: The tag key to extract (e.g., "title", "artist").
-    
+
     Returns:
         The tag value as a string, or None if not found.
     """
@@ -87,15 +83,15 @@ def _safe_tag(audio, key: str) -> Optional[str]:
 
 def _extract_art(audio) -> Optional[bytes]:
     """Extract embedded album art from an audio file.
-    
+
     Supports multiple formats:
     - MP3/ID3: Checks for data or picture attributes
     - FLAC: Checks the pictures list
     - MP4: Checks for 'covr' tag
-    
+
     Args:
         audio: The mutagen audio file object.
-    
+
     Returns:
         Raw image bytes if found, None otherwise.
     """
@@ -125,10 +121,10 @@ def _extract_art(audio) -> Optional[bytes]:
 
 def format_duration(duration_ms: Optional[int]) -> str:
     """Format a duration in milliseconds to a human-readable string.
-    
+
     Args:
         duration_ms: Duration in milliseconds, or None.
-    
+
     Returns:
         Formatted string like "3:45" or "--:--" if duration is None.
     """

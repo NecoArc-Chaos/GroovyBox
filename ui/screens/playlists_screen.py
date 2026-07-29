@@ -23,7 +23,7 @@ def PlaylistsScreen(page: ft.Page, on_refresh=None) -> ft.Control:
         A scrollable Column with playlist list items.
     """
     playlists = prepo.watch_all_playlists()
-    is_mobile = page.width < 600
+    is_mobile = (page.width or 0) < 600
 
     def create_new(e):
         """Show dialog for creating a new playlist."""

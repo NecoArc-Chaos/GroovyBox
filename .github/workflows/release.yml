@@ -1,0 +1,131 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+env:
+  # Use 0.86.1 which fixes the Android APK black-screen regression
+  # present in 0.85.x. See: https://github.com/flet-dev/flet/issues/2363
+  FLET_VERSION: '0.86.1'
+
+jobs:
+  build-all:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            os: windows-latest
+            artifact: GroovyBox-Windows
+          - platform: linux
+            os: ubuntu-latest
+            artifact: GroovyBox-Linux
+          - platform: macos
+            os: macos-latest
+            artifact: GroovyBox-macOS
+          - platform: android
+            os: ubuntu-latest
+            artifact: GroovyBox-Android
+          - platform: ios
+            os: macos-latest
+            artifact: GroovyBox-iOS
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: | 
+          pip install "flet[all]==${{ env.FLET_VERSION }}"
+          pip install mutagen Pillow colorthief httpx
+
+      - name: Install system deps
+        if: matrix.platform == 'linux'
+        run: | 
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libmpv-dev libgtk-3-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev liblzma-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+
+      - name: Cache Flutter SDK
+        uses: actions/cache@v4
+        with:
+          path: ~/.flet/flutter
+          key: flutter-${{ env.FLET_VERSION }}
+
+      - name: Build (${{ matrix.platform }})
+        timeout-minutes: 60
+        env:
+          PYTHONIOENCODING: utf-8
+          FLET_DISABLE_STRIP: '1'
+          # Android signing is optional; unsigned APK is produced if secrets are missing.
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          # iOS signing is currently disabled in this workflow.
+          # To enable, add IOS_CERTIFICATE_P12, IOS_CERTIFICATE_PASSWORD,
+          # IOS_PROVISIONING_PROFILE, and IOS_TEAM_ID secrets, then uncomment
+          # the signing steps below.
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+        run: python scripts/do_build.py ${{ matrix.platform }}
+
+      # iOS signing is disabled by default.
+      # Uncomment and configure the following secrets to enable signed IPA builds:
+      #   - IOS_CERTIFICATE_P12 (base64-encoded .p12 file)
+      #   - IOS_CERTIFICATE_PASSWORD
+      #   - IOS_PROVISIONING_PROFILE (base64-encoded .mobileprovision)
+      #   - IOS_TEAM_ID
+      # Then add the "Decode iOS certificate", "Decode iOS provisioning profile",
+      # and "Package unsigned IPA" steps back into this job.
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            build/${{ matrix.platform == 'android' && 'apk' || matrix.platform == 'ios' && 'ipa' || matrix.platform }}/**/*
+          if-no-files-found: error
+
+  release:
+    # Only run when a tag is pushed
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build-all
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./release-artifacts
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release-files
+          find release-artifacts -type f | while read f; do
+            cp "$f" release-files/
+          done
+          ls -la release-files/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: GroovyBox ${{ github.ref_name }}
+          body: |
+            Automated build for `${{ github.ref_name }}`.
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+          files: release-files/*
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

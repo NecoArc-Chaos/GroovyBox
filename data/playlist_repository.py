@@ -5,7 +5,7 @@ Also includes queries for albums, artists, and artist-album relationships
 used by the library browsing screens.
 """
 
-from typing import List, Optional
+from typing import List
 from data.db import get_connection
 from data.models import Track, Playlist, AlbumData, ArtistAlbums
 from data.track_repository import _row_to_track
@@ -158,10 +158,10 @@ def watch_album_tracks(album_name: str) -> List[Track]:
 
 def _row_to_playlist(row) -> Playlist:
     """Convert a database row to a Playlist dataclass instance.
-    
+
     Args:
         row: A sqlite3.Row object from a playlists table query.
-    
+
     Returns:
         A Playlist instance with values from the row.
     """

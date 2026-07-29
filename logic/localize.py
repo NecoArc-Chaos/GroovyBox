@@ -17,10 +17,10 @@ _strings: dict = {}
 
 def load_locale(lang: str):
     """Load translation strings for the specified language.
-    
+
     Reads the JSON locale file from the assets/locales directory.
     Falls back to an empty dictionary if the file doesn't exist.
-    
+
     Args:
         lang: Language code (e.g., "en", "zh").
     """
@@ -36,17 +36,17 @@ def load_locale(lang: str):
 
 def tr(key: str, *args) -> str:
     """Translate a string key to the current locale.
-    
+
     Supports placeholder substitution using {} syntax. If the key
     is not found in the translations, the key itself is returned.
-    
+
     Args:
         key: The translation key to look up.
         *args: Values to substitute into {} placeholders.
-    
+
     Returns:
         The translated string with placeholders filled.
-    
+
     Example:
         tr("importedTracks", 5) -> "Imported 5 tracks"
     """
@@ -59,7 +59,7 @@ def tr(key: str, *args) -> str:
 
 def get_locale() -> str:
     """Get the current locale code.
-    
+
     Returns:
         The current language code string (e.g., "en").
     """
