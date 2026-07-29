@@ -16,9 +16,8 @@ _home = os.path.expanduser("~")
 if not os.access(_home, os.W_OK):
     os.environ["HOME"] = os.path.join(_home, "Library", "Application Support")
 
-import flet as ft
-from flet import FilePicker, Text
-import flet_audio  # Ensure plugin is detected by build scanner
+import flet as ft  # noqa: E402
+from flet import FilePicker, Text  # noqa: E402
 
 
 def _show_error(page: ft.Page, title: str, error: Exception):
@@ -41,13 +40,13 @@ def _show_error(page: ft.Page, title: str, error: Exception):
 
 def main(page: ft.Page):
     """Initialize and run the GroovyBox application.
-    
+
     Pre-creates the FilePicker service at startup so that:
     1. The Flet build scanner detects the required Flutter plugins
-       (file_picker, flet_audio) and includes them in the iOS IPA.
+       (file_picker) and includes them in the iOS IPA.
     2. The Flutter client registers the invoke-method handlers,
        preventing TimeoutException on mobile.
-    
+
     Args:
         page: The Flet page object provided by the framework.
     """

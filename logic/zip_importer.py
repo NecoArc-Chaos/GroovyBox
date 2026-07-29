@@ -16,15 +16,15 @@ PLAYLIST_EXTENSIONS = {"m3u", "m3u8", "pls"}
 
 def extract_zip(zip_path: str, dest_dir: str = None) -> Tuple[List[str], List[str], List[str]]:
     """Extract a ZIP archive and categorize the contained files.
-    
+
     Extracts all files from the ZIP archive and categorizes them into
     audio files, lyrics files, and playlist files based on their extensions.
-    
+
     Args:
         zip_path: Absolute path to the ZIP file.
         dest_dir: Destination directory for extraction. If None, a temporary
                   directory is created with the prefix "groovybox_zip_".
-    
+
     Returns:
         A tuple of three lists:
         - audio_files: Paths to extracted audio files
@@ -33,7 +33,7 @@ def extract_zip(zip_path: str, dest_dir: str = None) -> Tuple[List[str], List[st
     """
     if dest_dir is None:
         dest_dir = tempfile.mkdtemp(prefix="groovybox_zip_")
-    
+
     audio_files = []
     lyrics_files = []
     playlist_files = []

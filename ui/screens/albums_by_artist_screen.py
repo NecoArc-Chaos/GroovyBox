@@ -13,13 +13,13 @@ from ui.widgets.universal_image import UniversalImage
 
 def AlbumsByArtistScreen(page: ft.Page) -> ft.Control:
     """Build the albums-by-artist grid screen.
-    
+
     Displays all artists who have albums, with their first album's
     art as the avatar. Shows album count and track count for each artist.
-    
+
     Args:
         page: The Flet page instance.
-    
+
     Returns:
         A scrollable GridView of artist cards, or a "no albums" message.
     """

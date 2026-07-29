@@ -144,7 +144,7 @@ def _export_as_zip(
     with tempfile.TemporaryDirectory() as tmpdir:
         inner_dir = os.path.join(tmpdir, base_name)
         os.makedirs(inner_dir, exist_ok=True)
-        
+
         # Generate M3U inside the temp directory
         m3u_path = os.path.join(inner_dir, f"{base_name}.m3u")
         _export_m3u(playlist, tracks, m3u_path, inner_dir, use_relpath=False,

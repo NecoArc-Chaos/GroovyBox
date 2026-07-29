@@ -7,7 +7,6 @@ to create new playlists, open existing ones, and delete playlists.
 import flet as ft
 from data import playlist_repository as prepo
 from logic.localize import tr
-from data.models import Playlist
 
 
 def PlaylistsScreen(page: ft.Page, on_refresh=None) -> ft.Control:

@@ -12,18 +12,17 @@ from typing import List
 
 def parse_m3u(path: str) -> List[str]:
     """Parse an M3U/M3U8 playlist file and return audio file paths.
-    
+
     Reads the playlist file, skips comments (lines starting with #),
     and resolves relative paths against the playlist's directory.
-    
+
     Args:
         path: Absolute path to the M3U file.
-    
+
     Returns:
         List of absolute paths to audio files that exist on disk.
     """
     # Try multiple encodings to read the file
-    encoding = "utf-8-sig"
     for enc in ["utf-8-sig", "utf-8", "gbk", "latin-1"]:
         try:
             with open(path, "r", encoding=enc) as f:
@@ -33,7 +32,7 @@ def parse_m3u(path: str) -> List[str]:
             continue
     else:
         lines = []
-    
+
     result = []
     base_dir = os.path.dirname(path)
     for line in lines:
@@ -53,17 +52,16 @@ def parse_m3u(path: str) -> List[str]:
 
 def parse_pls(path: str) -> List[str]:
     """Parse a PLS playlist file and return audio file paths.
-    
+
     Reads the playlist file using format: FileN=path/to/audio.mp3
-    
+
     Args:
         path: Absolute path to the PLS file.
-    
+
     Returns:
         List of absolute paths to audio files that exist on disk.
     """
     # Try multiple encodings
-    encoding = "utf-8-sig"
     for enc in ["utf-8-sig", "utf-8", "gbk", "latin-1"]:
         try:
             with open(path, "r", encoding=enc) as f:
@@ -90,14 +88,14 @@ def parse_pls(path: str) -> List[str]:
 
 def parse_playlist(path: str) -> List[str]:
     """Parse a playlist file and return audio file paths.
-    
+
     Automatically detects the format based on file extension:
     - .pls: PLS format
     - .m3u/.m3u8 or other: M3U format
-    
+
     Args:
         path: Absolute path to the playlist file.
-    
+
     Returns:
         List of absolute paths to audio files that exist on disk.
     """

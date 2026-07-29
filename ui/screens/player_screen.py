@@ -40,10 +40,10 @@ def _safe_volume(e, player):
 
 class PlayerScreen(ft.Container):
     """Full-screen music player with cover art, lyrics, and queue views.
-    
+
     Provides multiple display modes and handles keyboard shortcuts,
     lyrics synchronization, and real-time position tracking.
-    
+
     Attributes:
         _view_mode: Current display mode ("cover", "lyrics", or "queue").
     """
@@ -64,13 +64,13 @@ class PlayerScreen(ft.Container):
         self._prev_view_mode = None
         self._last_lyrics_idx = -1
         self._cached_dur = 0
-        
+
         # Lyrics sync state
         self._sync_active = False
         self._sync_track = None
         self._sync_temp_offset = 0
         self._seeking = False
-        
+
         # Curved lyrics state
         self._lyrics_column = None
         self._lyrics_need_initial_scroll = False
@@ -128,9 +128,9 @@ class PlayerScreen(ft.Container):
 
     def refresh_position(self, pos_ms: int, dur_ms: int):
         """Update position display and progress bar efficiently.
-        
+
         Also handles lyrics line highlighting and sync preview updates.
-        
+
         Args:
             pos_ms: Current playback position in milliseconds.
             dur_ms: Total track duration in milliseconds.
@@ -183,7 +183,7 @@ class PlayerScreen(ft.Container):
 
     def refresh_play_state(self, is_playing: bool):
         """Update the play/pause button icon.
-        
+
         Args:
             is_playing: True if currently playing, False if paused.
         """
@@ -271,14 +271,14 @@ class PlayerScreen(ft.Container):
 
     def _build_main_content(self, track, meta, player, is_desktop, use_curved=False):
         """Build the main content area based on the current view mode.
-        
+
         Args:
             track: Current track data.
             meta: Current track metadata.
             player: AudioPlayer instance.
             is_desktop: Whether running on a wide screen.
             use_curved: Whether to use curved lyrics mode.
-        
+
         Returns:
             A Stack with the main content and overlay controls.
         """
@@ -338,13 +338,13 @@ class PlayerScreen(ft.Container):
 
     def _build_split_view(self, track, meta, player, right_mode):
         """Build desktop split view with cover on left and content on right.
-        
+
         Args:
             track: Current track data.
             meta: Current track metadata.
             player: AudioPlayer instance.
             right_mode: Content for right panel ("lyrics" or "queue").
-        
+
         Returns:
             A Row with cover view and lyrics/queue side by side.
         """
@@ -360,12 +360,12 @@ class PlayerScreen(ft.Container):
 
     def _build_mobile_lyrics_layout(self, track, player, use_curved=False):
         """Build mobile lyrics layout with lyrics on top and controls at bottom.
-        
+
         Args:
             track: Current track data.
             player: AudioPlayer instance.
             use_curved: Whether to use curved lyrics mode.
-        
+
         Returns:
             A Column with lyrics and bottom control panel.
         """
@@ -418,10 +418,10 @@ class PlayerScreen(ft.Container):
 
     def _build_volume_row(self, player):
         """Build the volume control slider row.
-        
+
         Args:
             player: AudioPlayer instance.
-        
+
         Returns:
             A Row with volume icon and slider.
         """
@@ -458,14 +458,14 @@ class PlayerScreen(ft.Container):
 
     def _build_cover_view(self, track, meta, player, is_desktop, compact=False):
         """Build the album art cover view with controls.
-        
+
         Args:
             track: Current track data.
             meta: Current track metadata.
             player: AudioPlayer instance.
             is_desktop: Whether on a wide screen.
             compact: Whether to use compact sizing (for split view).
-        
+
         Returns:
             A Container with album art, title, controls, and progress.
         """
@@ -595,13 +595,13 @@ class PlayerScreen(ft.Container):
 
     def _build_progress_slider(self, player):
         """Build the progress slider with time labels.
-        
+
         Shows an indeterminate ProgressBar while loading, then switches to
         a Slider once the audio duration is known and playback is ready.
-        
+
         Args:
             player: AudioPlayer instance.
-        
+
         Returns:
             A Column with slider/loading bar and position/duration labels.
         """
@@ -714,12 +714,12 @@ class PlayerScreen(ft.Container):
 
     def _build_lyrics_view(self, track, player, use_curved=False):
         """Build the lyrics display view.
-        
+
         Args:
             track: Current track data.
             player: AudioPlayer instance.
             use_curved: Whether to use curved lyrics mode.
-        
+
         Returns:
             A lyrics display widget (curved, flat, or plain).
         """
@@ -756,7 +756,7 @@ class PlayerScreen(ft.Container):
 
     def _show_lyrics_menu(self, track, player):
         """Show the lyrics options bottom sheet.
-        
+
         Options: Fetch online, Manual import, Clear lyrics, Adjust offset
         """
         def do_fetch(e):
@@ -791,10 +791,10 @@ class PlayerScreen(ft.Container):
 
     def _build_sync_content(self):
         """Build the lyrics synchronization adjustment interface.
-        
+
         Provides controls for fine-tuning lyrics offset with
         real-time preview of the adjusted lyrics.
-        
+
         Returns:
             A Container with sync controls and lyrics preview.
         """
@@ -921,12 +921,12 @@ class PlayerScreen(ft.Container):
 
     def _build_sync_lyrics_preview(self, track, player, temp_offset):
         """Build a preview of lyrics with the current sync offset.
-        
+
         Args:
             track: Current track data.
             player: AudioPlayer instance.
             temp_offset: Temporary offset being tested.
-        
+
         Returns:
             A Container with scrollable lyrics preview, or None.
         """
@@ -983,7 +983,7 @@ class PlayerScreen(ft.Container):
     @staticmethod
     def _set_sync_line_content(container, ln, is_active, progress):
         """Set the content of a sync preview line with gradient highlighting.
-        
+
         Args:
             container: The Container to update.
             ln: The LyricsLine data.
@@ -1128,9 +1128,9 @@ class PlayerScreen(ft.Container):
 
     def _search_lyrics_online(self, track, source):
         """Search and fetch lyrics from an online source.
-        
+
         Supported sources: lrclib, netease
-        
+
         Args:
             track: The track to fetch lyrics for.
             source: The lyrics source identifier.
@@ -1199,7 +1199,7 @@ class PlayerScreen(ft.Container):
 
     async def _import_lyrics_file(self, track):
         """Import lyrics from a file picker dialog.
-        
+
         Args:
             track: The track to import lyrics for.
         """
@@ -1209,7 +1209,7 @@ class PlayerScreen(ft.Container):
         if not paths:
             return
         from logic.encoding_helper import read_with_encoding
-        from logic.lyrics_parser import parse, lyrics_to_json
+        from logic.lyrics_parser import parse
         content = read_with_encoding(paths[0])
         ldata = parse(content, os.path.basename(paths[0]))
         json_str = lyrics_to_json(ldata)
@@ -1243,7 +1243,7 @@ class PlayerScreen(ft.Container):
     def _build_scrolling_lyric_line(self, text, font_size, font_weight, color,
                                      container_width, progress, text_align):
         """Build a horizontally scrolling lyric line for long text.
-        
+
         Args:
             text: The lyrics text.
             font_size: Font size in pixels.
@@ -1252,7 +1252,7 @@ class PlayerScreen(ft.Container):
             container_width: Available width.
             progress: Scroll progress (0.0 to 1.0).
             text_align: Text alignment.
-        
+
         Returns:
             A Container with scrolling text if overflow, otherwise static.
         """
@@ -1295,7 +1295,7 @@ class PlayerScreen(ft.Container):
 
     def _style_lyric_line(self, container, i, current_idx):
         """Apply curved styling to a lyrics line based on distance from center.
-        
+
         Args:
             container: The Container to style.
             i: Index of this line.
@@ -1326,7 +1326,7 @@ class PlayerScreen(ft.Container):
 
     def _build_visible_lines(self, data, viewport_center, highlight_idx, player, max_w, text_align, progress=0.0):
         """Build centered visible lyrics lines with curved styling.
-        
+
         Args:
             data: LyricsData object.
             viewport_center: Index of the center line.
@@ -1335,7 +1335,7 @@ class PlayerScreen(ft.Container):
             max_w: Maximum width for lyrics text.
             text_align: Text alignment.
             progress: Progress within the highlighted line (0.0 to 1.0).
-        
+
         Returns:
             List of controls for the lyrics column.
         """
@@ -1397,14 +1397,14 @@ class PlayerScreen(ft.Container):
 
     def _build_curved_listview(self, data, current_idx, player, max_w, text_align):
         """Build the curved lyrics view with gesture controls.
-        
+
         Args:
             data: LyricsData object.
             current_idx: Initial active line index.
             player: AudioPlayer instance.
             max_w: Maximum width for lyrics.
             text_align: Text alignment.
-        
+
         Returns:
             A GestureDetector with curved lyrics display.
         """
@@ -1501,7 +1501,7 @@ class PlayerScreen(ft.Container):
 
     def _step_lyrics(self, direction):
         """Step to the next/previous lyrics line.
-        
+
         Args:
             direction: 1 for next, -1 for previous.
         """
@@ -1570,13 +1570,13 @@ class PlayerScreen(ft.Container):
 
     def _build_timed_lyrics(self, data, player, offset, use_curved=False):
         """Build timed lyrics display (curved or flat mode).
-        
+
         Args:
             data: LyricsData with timed lines.
             player: AudioPlayer instance.
             offset: Lyrics synchronization offset in ms.
             use_curved: Whether to use curved display mode.
-        
+
         Returns:
             A lyrics display widget.
         """
@@ -1593,7 +1593,6 @@ class PlayerScreen(ft.Container):
         self._lyrics_offset = offset
         self._lyrics_widgets = []
 
-        total = len(data.lines)
         pw = self._page.width or 400
         is_desktop = pw > 800
 
@@ -1601,7 +1600,6 @@ class PlayerScreen(ft.Container):
         text_align = ft.TextAlign.CENTER
 
         self._lyrics_widgets = []
-        total = len(data.lines)
         if use_curved:
             self._lyrics_data_obj = data
             gesture = self._build_curved_listview(data, current_idx, player, max_w, text_align)
@@ -1635,7 +1633,7 @@ class PlayerScreen(ft.Container):
 
     def _build_flat_lyrics_controls(self, data, highlight_idx, progress, max_w, text_align, player):
         """Build ALL lyrics line controls with gradient highlighting.
-        
+
         Args:
             data: LyricsData object.
             highlight_idx: Active line index.
@@ -1643,7 +1641,7 @@ class PlayerScreen(ft.Container):
             max_w: Maximum width.
             text_align: Text alignment.
             player: AudioPlayer instance.
-        
+
         Returns:
             List of controls for the flat lyrics view.
         """
@@ -1714,7 +1712,7 @@ class PlayerScreen(ft.Container):
 
     def _update_lyrics_styles(self, new_idx):
         """Update lyrics highlighting when the active line changes.
-        
+
         Args:
             new_idx: Index of the newly active lyrics line.
         """
@@ -1878,10 +1876,10 @@ class PlayerScreen(ft.Container):
 
     def _build_plain_lyrics(self, data):
         """Build plain (unsynchronized) lyrics display.
-        
+
         Args:
             data: LyricsData with plain lines.
-        
+
         Returns:
             A scrollable Column with lyrics text.
         """
@@ -1899,10 +1897,10 @@ class PlayerScreen(ft.Container):
 
     def _build_queue_view(self, player):
         """Build the playback queue view.
-        
+
         Args:
             player: AudioPlayer instance.
-        
+
         Returns:
             A scrollable ReorderableListView of queued tracks.
         """
@@ -1962,7 +1960,7 @@ class PlayerScreen(ft.Container):
 
     def _remove_from_queue(self, idx):
         """Remove a track from the queue by index.
-        
+
         Args:
             idx: Index of the track to remove.
         """

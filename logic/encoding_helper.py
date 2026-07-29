@@ -78,12 +78,12 @@ def detect_encoding(path):
     bom = _detect_by_bom(path)
     if bom:
         return bom
-    
+
     # Strategy 2: chardet statistical detection
     chardet_enc = _detect_with_chardet(path)
     if chardet_enc:
         return chardet_enc
-    
+
     # Strategy 3: Try common encodings
     for enc in COMMON_ENCODINGS:
         try:
@@ -92,7 +92,7 @@ def detect_encoding(path):
             return enc
         except (UnicodeDecodeError, UnicodeError):
             continue
-    
+
     return "utf-8"
 
 

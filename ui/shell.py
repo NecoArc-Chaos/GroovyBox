@@ -17,12 +17,12 @@ from ui.widgets.mini_player import MiniPlayerWidget
 
 class ShellView(ft.View):
     """Main application shell that provides the common layout structure.
-    
+
     Contains three main sections:
     - Toolbar: Navigation buttons (Home, Settings) and import action
     - Content view: Swappable area for different screens
     - Mini player: Persistent playback controls at the bottom
-    
+
     Attributes:
         content_view: Column container for the active screen content.
         mini_player: The MiniPlayerWidget instance at the bottom.
@@ -178,7 +178,7 @@ class ShellView(ft.View):
 
     def _build_toolbar(self):
         """Build the top toolbar with navigation and import buttons.
-        
+
         Returns:
             A Container with the toolbar layout including Home, Settings,
             and Import buttons.
@@ -215,7 +215,7 @@ class ShellView(ft.View):
 
     def _build_navigation_bar(self):
         """Build MD3-style bottom navigation bar for mobile.
-        
+
         Returns:
             A NavigationBar with Library, Playlists, and Settings destinations.
         """
@@ -253,7 +253,7 @@ class ShellView(ft.View):
 
     def _show_import_menu(self, e):
         """Show the import options bottom sheet menu.
-        
+
         Offers multiple import methods:
         - Audio files: Individual file selection
         - Folder: Scan an entire directory
@@ -298,10 +298,10 @@ class ShellView(ft.View):
 
     async def _import_files(self, paths=None):
         """Import audio and lyrics files from file picker or provided paths.
-        
+
         Separates audio files from lyrics files, imports audio into the
         database, and attempts to match lyrics to existing tracks.
-        
+
         Args:
             paths: Optional list of file paths. If None, opens file picker.
         """
@@ -314,7 +314,6 @@ class ShellView(ft.View):
             return
         logger.info(f"_import_files: selected {len(paths)} files")
         from data import track_repository as trepo
-        import os
 
         # Separate audio and lyrics files
         audio_paths = [p for p in paths if p.split(".")[-1].lower() in AUDIO_EXTENSIONS]
@@ -430,10 +429,10 @@ class ShellView(ft.View):
 
     async def _handle_path_import(self, path):
         """Handle import from a manually entered path.
-        
+
         Detects whether the path is a directory, audio file,
         playlist file, or ZIP archive and imports accordingly.
-        
+
         Args:
             path: The file or directory path to import.
         """
@@ -501,10 +500,10 @@ class ShellView(ft.View):
 
     async def _import_lyrics_files(self, lyrics_paths):
         """Batch import lyrics files by matching filenames to track titles.
-        
+
         Attempts to match each lyrics file to an existing track by
         comparing the filename (without extension) to track titles.
-        
+
         Args:
             lyrics_paths: List of absolute paths to lyrics files.
         """
@@ -536,7 +535,7 @@ class ShellView(ft.View):
 
     async def _reload_after_import(self):
         """Reload the UI after completing an import operation.
-        
+
         Refreshes the page and triggers a full UI rebuild to reflect
         the newly imported tracks.
         """

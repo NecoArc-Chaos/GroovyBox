@@ -16,10 +16,10 @@ from ui.widgets.track_tile import TrackTile
 
 class PlaylistDetailView(ft.Container):
     """Playlist detail view with track listing and management controls.
-    
+
     Provides controls to play all tracks, add to queue, and export
     the playlist in various formats (M3U, ZIP).
-    
+
     Attributes:
         playlist: The Playlist object being displayed.
     """
@@ -294,7 +294,7 @@ class PlaylistDetailView(ft.Container):
 
     def _show_export_dialog(self):
         """Show the playlist export configuration dialog.
-        
+
         Allows the user to choose export options then saves via
         FilePicker (works on all platforms including mobile/web).
         """
@@ -365,7 +365,7 @@ class PlaylistDetailView(ft.Container):
 
     def _play_all(self, tracks=None, initial_index=0):
         """Play all tracks in the playlist.
-        
+
         Args:
             tracks: Optional pre-loaded track list. If None, fetches from DB.
             initial_index: Index to start playback from.
@@ -379,7 +379,7 @@ class PlaylistDetailView(ft.Container):
 
     def _play_at(self, tracks, idx):
         """Play the playlist starting from a specific track index.
-        
+
         Args:
             tracks: List of tracks in the playlist.
             idx: Index of the track to start from.
@@ -388,7 +388,7 @@ class PlaylistDetailView(ft.Container):
 
     def _add_to_queue(self, tracks):
         """Add all playlist tracks to the playback queue.
-        
+
         Args:
             tracks: List of tracks to add.
         """

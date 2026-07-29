@@ -13,22 +13,18 @@ import os
 import flet as ft
 from data import track_repository as trepo
 from data import playlist_repository as prepo
-from data.models import Track
 from logic.localize import tr
-from logic.metadata_service import format_duration
 from ui.widgets.track_tile import TrackTile
-from ui.widgets.universal_image import UniversalImage
 from ui.widgets.track_actions import show_track_details, show_edit_dialog
 from logic.logger import logger
-from data.db import is_mobile
 
 
 class LibraryScreen(ft.Column):
     """Main library screen with tabbed navigation.
-    
+
     Provides access to tracks, albums, and playlists. Supports
     multi-select mode for batch operations and real-time search filtering.
-    
+
     Attributes:
         selected_ids: Set of track IDs selected in multi-select mode.
         search_query: Current search filter text.
@@ -99,7 +95,7 @@ class LibraryScreen(ft.Column):
 
     def _build_large_layout(self):
         """Build desktop layout with NavigationRail sidebar.
-        
+
         Returns:
             A Row with NavigationRail on the left and content on the right.
         """
@@ -134,7 +130,7 @@ class LibraryScreen(ft.Column):
 
     def _build_mobile_layout(self):
         """Build mobile layout with horizontal tab buttons.
-        
+
         Returns:
             A Column with tab buttons at top and content below.
         """
@@ -145,9 +141,15 @@ class LibraryScreen(ft.Column):
                 content=ft.Row(
                     tight=True,
                     controls=[
-                        ft.Icon(icon, size=18, color=ft.Colors.PRIMARY if is_sel else ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE)),
-                        ft.Text(label, size=13, weight=ft.FontWeight.BOLD if is_sel else ft.FontWeight.NORMAL,
-                                color=ft.Colors.PRIMARY if is_sel else ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE)),
+                        ft.Icon(
+                            icon, size=18,
+                            color=ft.Colors.PRIMARY if is_sel else ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE),
+                        ),
+                        ft.Text(
+                            label, size=13,
+                            weight=ft.FontWeight.BOLD if is_sel else ft.FontWeight.NORMAL,
+                            color=ft.Colors.PRIMARY if is_sel else ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE),
+                        ),
                     ],
                 ),
                 on_click=lambda e, i=idx: self._on_mobile_tab_change(i),
@@ -200,7 +202,7 @@ class LibraryScreen(ft.Column):
 
     def _build_tab_content(self):
         """Build the content for the currently selected tab.
-        
+
         Returns:
             The appropriate screen widget for the active tab.
         """
@@ -215,7 +217,7 @@ class LibraryScreen(ft.Column):
 
     def _build_tracks_content(self):
         """Build the tracks tab content with search and track list.
-        
+
         Returns:
             A Stack with search bar overlay and scrollable track list.
         """
@@ -233,7 +235,10 @@ class LibraryScreen(ft.Column):
         if all_tracks:
             if self.search_query:
                 q = self.search_query.lower()
-                filtered = sum(1 for t in all_tracks if q in t.title.lower() or (t.artist and q in t.artist.lower()) or (t.album and q in t.album.lower()))
+                filtered = sum(
+                    1 for t in all_tracks
+                    if q in t.title.lower() or (t.artist and q in t.artist.lower()) or (t.album and q in t.album.lower())
+                )
                 search_hint = tr("searchTracksFiltered", filtered, len(all_tracks))
             else:
                 search_hint = tr("searchTracksWithCount", len(all_tracks))
@@ -243,6 +248,11 @@ class LibraryScreen(ft.Column):
             self.search_query = e.control.value
             self._build()
             self.update()
+
+        def on_search_change(e):
+            """Handle search field change with debounce."""
+            self.search_query = e.control.value
+            self._search_debounce()
 
         # Build top bar (search or selection)
         if is_sel_mode:
@@ -331,10 +341,10 @@ class LibraryScreen(ft.Column):
 
     def _build_selection_bar(self):
         """Build the multi-select action bar.
-        
+
         Shows selected count and action buttons for batch operations:
         select all, deselect all, invert selection, and batch menu.
-        
+
         Returns:
             A Container with the selection bar layout.
         """
@@ -461,12 +471,12 @@ class LibraryScreen(ft.Column):
 
     def _filter_tracks(self, tracks):
         """Filter tracks based on the current search query.
-        
+
         Matches against title, artist, and album fields.
-        
+
         Args:
             tracks: List of all tracks.
-        
+
         Returns:
             Filtered list of tracks matching the search query.
         """
@@ -580,7 +590,7 @@ class LibraryScreen(ft.Column):
 
     def _play_track(self, track):
         """Play a single track from the library.
-        
+
         Args:
             track: The Track object to play.
         """
@@ -593,9 +603,9 @@ class LibraryScreen(ft.Column):
 
     def _show_track_options(self, track):
         """Show context menu for a track.
-        
+
         Options: Add to Playlist, View Details, Edit Metadata, Delete
-        
+
         Args:
             track: The Track object to show options for.
         """
@@ -655,7 +665,7 @@ class LibraryScreen(ft.Column):
                 self._page.pop_dialog()
                 self._build()
                 self.update()
-            except Exception as ex:
+            except Exception:
                 logger.exception("_show_batch_add_to_playlist.pick_pl failed")
 
         dlg = ft.BottomSheet(

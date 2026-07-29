@@ -7,19 +7,16 @@ Adapts layout for desktop (wide) and mobile (narrow) screens.
 """
 
 import flet as ft
-from typing import Optional, Callable
-from data.models import CurrentTrackData
 from logic.localize import tr
-from logic.logger import logger
 
 
 class MiniPlayerWidget(ft.Container):
     """Compact persistent player widget at the bottom of the screen.
-    
+
     Shows current track info, play/pause/skip controls, progress bar,
     and play mode cycling. Automatically switches between desktop and
     mobile layouts based on screen width.
-    
+
     Attributes:
         current_track: The currently playing track data.
     """
@@ -62,9 +59,9 @@ class MiniPlayerWidget(ft.Container):
 
     def bind(self, app):
         """Bind the mini player to the application's audio player.
-        
+
         Sets up all callback references to the audio player's methods.
-        
+
         Args:
             app: The GroovyBoxApp instance.
         """
@@ -96,7 +93,7 @@ class MiniPlayerWidget(ft.Container):
 
     def _open_queue(self, e):
         """Show the playback queue in a bottom sheet.
-        
+
         Displays all tracks in the queue with options to reorder
         and select tracks. The currently playing track is highlighted.
         """
@@ -174,7 +171,7 @@ class MiniPlayerWidget(ft.Container):
 
     def _on_queue_select(self, idx: int):
         """Handle track selection from the queue sheet.
-        
+
         Args:
             idx: Index of the selected track in the queue.
         """
@@ -195,7 +192,7 @@ class MiniPlayerWidget(ft.Container):
 
     def refresh(self):
         """Rebuild the mini player UI based on current state.
-        
+
         Switches between desktop and mobile layouts based on screen width.
         Hides the player entirely if no track is loaded.
         """
@@ -250,9 +247,9 @@ class MiniPlayerWidget(ft.Container):
 
     def refresh_position(self, pos_ms: int, dur_ms: int):
         """Update the progress bar position efficiently.
-        
+
         Only updates the slider widget, avoiding full rebuilds.
-        
+
         Args:
             pos_ms: Current position in milliseconds.
             dur_ms: Total duration in milliseconds.
@@ -271,7 +268,7 @@ class MiniPlayerWidget(ft.Container):
 
     def refresh_play_state(self, is_playing: bool):
         """Update the play/pause button icon efficiently.
-        
+
         Args:
             is_playing: True if currently playing, False if paused.
         """
@@ -293,7 +290,7 @@ class MiniPlayerWidget(ft.Container):
 
     def _build_progress(self) -> ft.Control:
         """Build the progress bar or loading indicator.
-        
+
         Returns:
             A ProgressBar during loading, or a Slider for position tracking.
         """
@@ -326,10 +323,10 @@ class MiniPlayerWidget(ft.Container):
 
     def _build_play_button(self, icon_size: int = 28) -> ft.IconButton:
         """Build the play/pause button.
-        
+
         Args:
             icon_size: Size of the play/pause icon.
-        
+
         Returns:
             An IconButton with play or pause icon.
         """
@@ -343,7 +340,7 @@ class MiniPlayerWidget(ft.Container):
 
     def _build_mobile(self):
         """Build the mobile layout (narrow screens).
-        
+
         Layout: Progress bar + [Art | Title/Artist | PlayMode | Play | Queue]
         """
         from logic.play_mode import get_play_mode_icon
@@ -397,7 +394,7 @@ class MiniPlayerWidget(ft.Container):
 
     def _build_desktop(self):
         """Build the desktop layout (wide screens).
-        
+
         Layout: Progress bar + [Art/Title | PlayMode/Prev/Play/Next/Queue | Volume]
         """
         from logic.play_mode import get_play_mode_icon

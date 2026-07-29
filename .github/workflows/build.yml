@@ -30,7 +30,7 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies
         run: |
-          pip install ruff
+          pip install ruff pytest
           pip install flet==${{ env.FLET_VERSION }} flet-audio==${{ env.FLET_VERSION }}
           pip install mutagen Pillow colorthief httpx
       - name: Lint with ruff
@@ -38,6 +38,9 @@ jobs:
       - name: Type check (basic)
         run: |
           python -m py_compile logic/audio_handler.py logic/metadata_service.py data/track_repository.py app.py main.py || true
+      - name: Run tests
+        run: |
+          python -m pytest tests/ -v --tb=short
 
   windows:
     if: contains(inputs.platforms, 'windows')

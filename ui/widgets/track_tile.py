@@ -27,11 +27,11 @@ def TrackTile(
     is_missing: bool = False,
 ) -> ft.Container:
     """Create a track list item widget.
-    
+
     Renders a track with album art thumbnail, title, artist/duration
     subtitle, and optional action button. Highlights the currently
     playing track with primary color accents.
-    
+
     Args:
         track: The Track data object to display.
         on_tap: Callback when the tile is tapped.
@@ -43,7 +43,7 @@ def TrackTile(
         padding: Vertical padding override for the tile.
         trailing_icon: Icon to use for the trailing button.
         is_missing: Whether the track file is missing on disk.
-    
+
     Returns:
         A Container widget with the styled track tile.
     """

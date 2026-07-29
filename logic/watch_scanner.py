@@ -8,9 +8,8 @@ the scanner automatically updates the track database.
 import os
 import threading
 import asyncio
-from typing import Dict, List, Optional, Set
+from typing import Dict, Optional, Set
 from data import track_repository as trepo
-from data.models import Track
 from logic.logger import logger
 from logic.metadata_service import get_metadata
 

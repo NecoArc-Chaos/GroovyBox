@@ -11,7 +11,6 @@ Supports automatic format detection and JSON serialization for database storage.
 
 import re
 import json
-from typing import List
 from data.models import LyricsLine, LyricsData
 
 

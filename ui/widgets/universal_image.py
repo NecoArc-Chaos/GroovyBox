@@ -8,17 +8,16 @@ fallback to an icon when the image cannot be loaded.
 import flet as ft
 import os
 from typing import Optional
-from logic.localize import tr
 
 
 class UniversalImage(ft.Container):
     """An image container that supports local files and network URLs.
-    
+
     Automatically displays a fallback icon when:
     - The URI is None or empty
     - The file doesn't exist on disk
     - The image fails to load
-    
+
     Attributes:
         _uri: The image source URI (local path or URL).
         _fit: How the image should fit within its bounds.
@@ -55,10 +54,10 @@ class UniversalImage(ft.Container):
 
     def _is_network(self, uri: str) -> bool:
         """Check if a URI points to a network resource.
-        
+
         Args:
             uri: The URI string to check.
-        
+
         Returns:
             True if the URI starts with http:// or https://.
         """

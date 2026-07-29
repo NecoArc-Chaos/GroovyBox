@@ -9,7 +9,7 @@ if not _MOBILE:
         import pystray
         from PIL import Image
         _HAS_TRAY = True
-    except ImportError:
+    except Exception:
         _HAS_TRAY = False
 else:
     _HAS_TRAY = False

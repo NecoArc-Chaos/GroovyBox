@@ -16,14 +16,14 @@ from ui.widgets.track_actions import show_track_details, show_edit_dialog, show_
 
 def ArtistDetailScreen(page: ft.Page, artist_name: str) -> ft.Control:
     """Build the artist detail screen.
-    
+
     Displays the artist's avatar, name, track count, and all tracks.
     Includes a "Play All" button and track context menus for management.
-    
+
     Args:
         page: The Flet page instance.
         artist_name: Name of the artist to display.
-    
+
     Returns:
         A Column widget with the artist detail layout.
     """
@@ -48,7 +48,11 @@ def ArtistDetailScreen(page: ft.Page, artist_name: str) -> ft.Control:
             ft.Container(width=16),
             ft.Column([
                 ft.Text(artist_name, size=22, weight=ft.FontWeight.BOLD),
-                ft.Text(f"{len(tracks)} {tr('tracks')}", size=13, color=ft.Colors.with_opacity(0.7, ft.Colors.ON_SURFACE)),
+                ft.Text(
+                    f"{len(tracks)} {tr('tracks')}",
+                    size=13,
+                    color=ft.Colors.with_opacity(0.7, ft.Colors.ON_SURFACE),
+                ),
             ]),
             ft.Container(expand=True),
             ft.FilledButton(tr("playAll"), on_click=play_all),
@@ -96,10 +100,26 @@ def ArtistDetailScreen(page: ft.Page, artist_name: str) -> ft.Control:
             content=ft.Column(
                 tight=True,
                 controls=[
-                    ft.ListTile(leading=ft.Icon(ft.Icons.PLAYLIST_ADD), title=ft.Text(tr("addToPlaylist")), on_click=do_add_to_pl),
-                    ft.ListTile(leading=ft.Icon(ft.Icons.INFO), title=ft.Text(tr("viewDetails")), on_click=do_view_details),
-                    ft.ListTile(leading=ft.Icon(ft.Icons.EDIT), title=ft.Text(tr("editMetadata")), on_click=do_edit),
-                    ft.ListTile(leading=ft.Icon(ft.Icons.DELETE, color=ft.Colors.RED), title=ft.Text(tr("delete"), color=ft.Colors.RED), on_click=do_delete),
+                    ft.ListTile(
+                        leading=ft.Icon(ft.Icons.PLAYLIST_ADD),
+                        title=ft.Text(tr("addToPlaylist")),
+                        on_click=do_add_to_pl,
+                    ),
+                    ft.ListTile(
+                        leading=ft.Icon(ft.Icons.INFO),
+                        title=ft.Text(tr("viewDetails")),
+                        on_click=do_view_details,
+                    ),
+                    ft.ListTile(
+                        leading=ft.Icon(ft.Icons.EDIT),
+                        title=ft.Text(tr("editMetadata")),
+                        on_click=do_edit,
+                    ),
+                    ft.ListTile(
+                        leading=ft.Icon(ft.Icons.DELETE, color=ft.Colors.RED),
+                        title=ft.Text(tr("delete"), color=ft.Colors.RED),
+                        on_click=do_delete,
+                    ),
                 ],
             ),
         )

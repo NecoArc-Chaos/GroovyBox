@@ -539,7 +539,7 @@ class GroovyBoxApp:
         """
         try:
             self._sync_views()
-        except Exception as ex:
+        except Exception:
             logger.exception("Route change failed")
             # Fallback: try to show the library screen so the user sees
             # something instead of a black screen.  Guard against

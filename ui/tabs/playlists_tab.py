@@ -1,6 +1,5 @@
 import flet as ft
 from data import playlist_repository as prepo
-from data.models import Playlist
 from logic.localize import tr
 
 

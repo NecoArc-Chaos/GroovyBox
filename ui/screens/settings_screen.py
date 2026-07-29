@@ -18,7 +18,7 @@ from logic.key_bindings import DEFAULT_KEY_BINDINGS, ACTION_NAMES, ACTION_ORDER
 
 def SettingsScreen(page: ft.Page) -> ft.Column:
     """Build the settings screen with all configuration sections.
-    
+
     Sections include:
     - Auto Scan: Toggle automatic library scanning
     - Music Libraries: Manage watch folders
@@ -27,10 +27,10 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
     - Database Management: Reset track database
     - Logs: Log level and export
     - About: Application information
-    
+
     Args:
         page: The Flet page instance.
-    
+
     Returns:
         A scrollable Column with all settings sections.
     """
@@ -367,7 +367,7 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
     if raw:
         try:
             bindings.update(json.loads(raw))
-        except:
+        except Exception:
             pass
     cap = [None]
     hotkey_rows = [_build_hotkey_row(ak) for ak in ACTION_ORDER]
@@ -668,8 +668,8 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                             controls=[
                                 ft.Text("Contributors: ", size=12, color=ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE)),
                                 ft.TextButton("luolingy", url="https://github.com/luolingy"),
-								ft.TextButton("ZhiH", url="https://github.com/ZhiH2333"),
-								ft.TextButton("符跃 万界(logo)", url="https://qm.qq.com/q/vMovFQlrj2"),
+ft.TextButton("符跃 万界(logo)", url="https://qm.qq.com/q/vMovFQlrj2"),			ft.TextButton("ZhiH", url="https://github.com/ZhiH2333"),
+ft.TextButton("符跃 万界(logo)", url="https://qm.qq.com/q/vMovFQlrj2"),			ft.TextButton("符跃 万界(logo)", url="https://qm.qq.com/q/vMovFQlrj2"),
                             ],
                         ),
                     ],

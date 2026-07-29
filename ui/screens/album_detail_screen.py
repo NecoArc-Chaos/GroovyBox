@@ -9,15 +9,14 @@ import flet as ft
 from data import playlist_repository as prepo
 from logic.localize import tr
 from ui.widgets.track_tile import TrackTile
-from ui.widgets.universal_image import UniversalImage
 
 
 class AlbumDetailView(ft.Container):
     """Album detail view showing album art and track listing.
-    
+
     Provides controls to play all tracks or add them to the queue.
     Displays tracks with numbered leading indicators.
-    
+
     Attributes:
         album: The AlbumData object being displayed.
     """
@@ -34,7 +33,7 @@ class AlbumDetailView(ft.Container):
 
     def _build(self):
         """Build the album detail view layout.
-        
+
         Creates a scrollable view with:
         - Back button
         - Album art (240x240)
@@ -76,9 +75,15 @@ class AlbumDetailView(ft.Container):
                         tight=True,
                         alignment=ft.MainAxisAlignment.CENTER,
                         controls=[
-                            ft.FilledButton(tr("playAll"), icon=ft.Icons.PLAY_ARROW, on_click=lambda e: self._play_all()),
+                            ft.FilledButton(
+                                tr("playAll"), icon=ft.Icons.PLAY_ARROW,
+                                on_click=lambda e: self._play_all(),
+                            ),
                             ft.Container(width=12),
-                            ft.OutlinedButton(tr("addToQueue"), icon=ft.Icons.QUEUE_MUSIC, on_click=lambda e: self._add_to_queue(tracks)),
+                            ft.OutlinedButton(
+                                tr("addToQueue"), icon=ft.Icons.QUEUE_MUSIC,
+                                on_click=lambda e: self._add_to_queue(tracks),
+                            ),
                         ],
                     ),
                 ),
@@ -110,7 +115,7 @@ class AlbumDetailView(ft.Container):
 
     def _play_all(self, tracks=None, initial_index=0):
         """Play all tracks in the album.
-        
+
         Args:
             tracks: Optional pre-loaded track list. If None, fetches from DB.
             initial_index: Index to start playback from.
@@ -124,7 +129,7 @@ class AlbumDetailView(ft.Container):
 
     def _play_at(self, tracks, idx):
         """Play the album starting from a specific track index.
-        
+
         Args:
             tracks: List of tracks in the album.
             idx: Index of the track to start from.
@@ -133,7 +138,7 @@ class AlbumDetailView(ft.Container):
 
     def _add_to_queue(self, tracks):
         """Add all album tracks to the playback queue.
-        
+
         Args:
             tracks: List of tracks to add.
         """

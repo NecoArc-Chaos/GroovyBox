@@ -1,7 +1,6 @@
 import flet as ft
 from data import playlist_repository as prepo
 from logic.localize import tr
-from ui.screens.album_detail_screen import AlbumDetailView
 
 
 def build_albums_grid(page: ft.Page, on_open: callable) -> ft.Control:
