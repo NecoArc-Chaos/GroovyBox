@@ -221,9 +221,9 @@ class LibraryScreen(ft.Column):
             if self.search_query:
                 q = self.search_query.lower()
                 filtered = sum(1 for t in all_tracks if q in t.title.lower() or (t.artist and q in t.artist.lower()) or (t.album and q in t.album.lower()))
-                search_hint = tr("searchTracksFiltered").replace("{}", str(filtered)).replace("{}", str(len(all_tracks)))
+                search_hint = tr("searchTracksFiltered", filtered, len(all_tracks))
             else:
-                search_hint = tr("searchTracksWithCount").replace("{}", str(len(all_tracks)))
+                search_hint = tr("searchTracksWithCount", len(all_tracks))
 
         def on_search(e):
             """Handle search field submission."""

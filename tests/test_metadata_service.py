@@ -19,7 +19,7 @@ def test_get_metadata_missing_file():
     meta = get_metadata("/nonexistent/path.mp3")
     assert meta.title is None
     assert meta.artist is None
-    assert meta.duration == 0
+    assert meta.duration is None
     assert meta.art_bytes is None
 
 

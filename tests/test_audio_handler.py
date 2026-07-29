@@ -3,6 +3,7 @@
 import pytest
 from unittest.mock import MagicMock
 from logic.audio_handler import AudioPlayer
+from data import db
 
 
 @pytest.fixture
@@ -10,6 +11,7 @@ def mock_page():
     page = MagicMock()
     page.services = []
     page.update = MagicMock()
+    db.init_database()
     return page
 
 
@@ -38,6 +40,19 @@ def test_set_volume_bounds(mock_page):
     assert player.volume <= 1.0
     player.set_volume(-0.5)
     assert player.volume >= 0.0
+
+
+def test_volume_persists_to_db(mock_page):
+    player = AudioPlayer(mock_page)
+    player.set_volume(0.5)
+    assert db.get_setting("player_volume") == "0.5"
+
+
+def test_shutdown_idempotent(mock_page):
+    player = AudioPlayer(mock_page)
+    player.shutdown()
+    player.shutdown()  # Should not raise
+    assert player._timer_active is False
 
 
 def test_shutdown_stops_timer(mock_page):

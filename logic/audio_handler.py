@@ -397,7 +397,8 @@ class AudioPlayer:
             self._volume = max(0.0, min(1.0, volume))
             vol = self._volume
         db.set_setting("player_volume", str(round(vol, 2)))
-        self._audio.volume = vol
+        if hasattr(self, "_audio") and self._audio is not None:
+            self._audio.volume = vol
         self.page.update()
 
     def get_current_track(self) -> Optional[Track]:

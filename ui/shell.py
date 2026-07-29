@@ -36,8 +36,10 @@ class ShellView(ft.View):
         # Default to mobile layout (True) when size is unknown; it will
         # self-correct on the first resize event once the Flutter client
         # reports the real viewport size.
-        self._is_mobile = (page.width or 0) < 600
-        self._swipe_back_started = False
+        # Use platform detection as a secondary guard: SafeArea and
+        # navigation_bar should only be applied on actual mobile platforms,
+        # not on desktop windows that happen to be narrow.
+        self._is_mobile = self._detect_mobile(page)
 
         # Main content area and mini player
         self.content_view = ft.Column(expand=True, spacing=0)
@@ -86,6 +88,40 @@ class ShellView(ft.View):
         bg_wrapper = self._build_global_bg_wrapper(body)
         self.controls = [bg_wrapper] if bg_wrapper else [body]
 
+    @staticmethod
+    def _detect_mobile(page: ft.Page) -> bool:
+        """Detect whether the current platform is a mobile device.
+
+        Uses page.width as primary signal, falling back to platform
+        detection when width is None (early init) or when the window
+        is intentionally narrow on desktop.
+        """
+        try:
+            w = page.width
+            if w is not None and w >= 600:
+                return False
+            if w is not None and w < 600:
+                # Narrow window — could be mobile or resized desktop.
+                # Use platform string as tie-breaker.
+                return ShellView._platform_is_mobile(page)
+            # width is None: early init. Guess from platform.
+            return ShellView._platform_is_mobile(page)
+        except Exception:
+            return False
+
+    @staticmethod
+    def _platform_is_mobile(page: ft.Page) -> bool:
+        """Return True if the page platform indicates a mobile device."""
+        try:
+            platform = getattr(page, "platform", None) or getattr(page, "platform_type", None)
+            if platform is None:
+                return False
+            p = str(platform).lower()
+            mobile_platforms = ("android", "ios", "iphone", "ipad")
+            return any(m in p for m in mobile_platforms)
+        except Exception:
+            return False
+
     @property
     def page(self):
         """Access the Flet page instance."""
@@ -129,6 +165,14 @@ class ShellView(ft.View):
 
     def on_window_size_changed(self):
         """Handle window resize by refreshing the mini player layout."""
+        # Re-detect mobile/desktop and rebuild shell if the category changed
+        new_is_mobile = self._detect_mobile(self._page)
+        if new_is_mobile != self._is_mobile:
+            self._is_mobile = new_is_mobile
+            # Rebuild the entire shell layout
+            if self.app:
+                self.app._reload_ui()
+            return
         if hasattr(self.mini_player, 'on_window_size_changed'):
             self.mini_player.on_window_size_changed()
 

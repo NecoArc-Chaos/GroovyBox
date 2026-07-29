@@ -156,11 +156,13 @@ class TrackMetadata:
         title: Track title from metadata tags.
         artist: Artist name from metadata tags.
         album: Album name from metadata tags.
+        duration: Track duration in milliseconds.
         art_bytes: Raw bytes of the embedded album art image.
     """
     title: Optional[str] = None
     artist: Optional[str] = None
     album: Optional[str] = None
+    duration: Optional[int] = None
     art_bytes: Optional[bytes] = None
 
 

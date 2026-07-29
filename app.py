@@ -122,29 +122,30 @@ class GroovyBoxApp:
                 logger.warning("window.on_event not supported")
 
         # Navigate to the library screen as the initial view.
-        # Use direct route assignment instead of run_task(push_route) because
-        # the latter can be unreliable on Android during early startup when
-        # the Flutter client is still initializing.
-        #
-        # NOTE: Setting page.route already fires _on_route_change -> _sync_views(),
-        # so we only call _sync_views() explicitly as a fallback in case the
-        # on_route_change handler was not invoked (some Flet versions defer it).
+        # Setting page.route triggers _on_route_change -> _sync_views().
+        # Defer the fallback _sync_views() to the next event-loop iteration
+        # so the Flutter client has time to finish initializing on mobile.
+        # This avoids a black screen caused by calling page.update() too early.
         self._initial_views_synced = False
         try:
             page.route = "/library"
-            # _on_route_change may have already called _sync_views();
-            # only call again if it hasn't run yet (guards against double-render).
-            if not self._initial_views_synced:
-                self._sync_views()
         except Exception:
-            logger.warning("Initial route sync failed", exc_info=True)
-            # Last-resort fallback: show a minimal library view
-            try:
-                self._show_fallback_view()
-            except Exception:
-                pass
+            logger.warning("Initial route assignment failed", exc_info=True)
+        page.run_task(self._delayed_initial_sync)
         page.run_task(self._tray_watch)
         self._set_window_icon()
+
+    async def _delayed_initial_sync(self):
+        """Fallback sync if _on_route_change didn't fire or didn't complete."""
+        if not self._initial_views_synced:
+            try:
+                self._sync_views()
+            except Exception:
+                logger.warning("Delayed initial sync failed", exc_info=True)
+                try:
+                    self._show_fallback_view()
+                except Exception:
+                    pass
 
     def _is_dark_mode(self):
         if self.theme_mode == ft.ThemeMode.DARK:
@@ -701,9 +702,6 @@ class GroovyBoxApp:
         """
         route = self.page.route
 
-        # Mark that views have been synced (guards against double-render on startup)
-        self._initial_views_synced = True
-
         # Player screen takes full page (no shell)
         if route == "/player":
             self.page.views.clear()
@@ -768,3 +766,6 @@ class GroovyBoxApp:
         self.page.views.append(self.shell)
         self.shell.mini_player.refresh()
         self.page.update()
+
+        # Mark that views have been synced (guards against double-render on startup)
+        self._initial_views_synced = True
