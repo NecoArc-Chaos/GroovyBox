@@ -64,13 +64,35 @@ def _detect_by_bom(path):
     return None
 
 
+def _detect_utf16(path):
+    """Detect UTF-16 encoding by null-byte pattern.
+
+    Checks whether the file exhibits the alternating null-byte pattern
+    characteristic of UTF-16-LE or UTF-16-BE, even when no BOM is present.
+    """
+    try:
+        with open(path, "rb") as f:
+            raw = f.read(min(8192, os.path.getsize(path)))
+        if len(raw) < 4:
+            return None
+        half = len(raw) // 2
+        if raw[1::2][:half] == b"\x00" * half:
+            return "utf-16-le"
+        if raw[0::2][:half] == b"\x00" * half:
+            return "utf-16-be"
+    except Exception:
+        pass
+    return None
+
+
 def detect_encoding(path):
     """Detect the encoding of a text file.
 
     Uses a multi-strategy approach:
     1. Check for BOM (Byte Order Mark)
     2. Try chardet library for statistical detection
-    3. Try common encodings sequentially
+    3. Detect UTF-16 by null-byte pattern
+    4. Try common encodings sequentially
 
     Args:
         path: Path to the text file.
@@ -88,7 +110,12 @@ def detect_encoding(path):
     if chardet_enc:
         return chardet_enc
 
-    # Strategy 3: Try common encodings
+    # Strategy 3: UTF-16 null-byte pattern detection
+    utf16_enc = _detect_utf16(path)
+    if utf16_enc:
+        return utf16_enc
+
+    # Strategy 4: Try common encodings
     for enc in COMMON_ENCODINGS:
         try:
             with open(path, encoding=enc) as f:
