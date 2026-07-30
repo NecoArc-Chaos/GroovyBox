@@ -13,7 +13,7 @@ import subprocess
 import sys
 
 DESKTOP_PLATFORMS = ("windows", "linux", "macos")
-EXTRA_DESKTOP_DEPS = "# desktop-only dependencies\npystray>=0.19.0\n"
+EXTRA_DESKTOP_DEPS = "# desktop-only dependencies\npystray>=0.19.0\nwatchdog>=3.0.0\n"
 MOBILE_PLATFORMS = ("android", "ios", "apk", "aab", "ipa")
 
 

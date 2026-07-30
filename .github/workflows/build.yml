@@ -32,7 +32,7 @@ jobs:
         run: |
           pip install ruff pytest
           pip install flet==${{ env.FLET_VERSION }} flet-audio==${{ env.FLET_VERSION }}
-          pip install mutagen Pillow colorthief httpx
+          pip install mutagen Pillow colorthief httpx watchdog
       - name: Lint with ruff
         run: ruff check logic/ data/ ui/ app.py main.py --select E,F,W
       - name: Type check (basic)
