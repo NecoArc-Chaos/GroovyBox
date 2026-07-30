@@ -85,6 +85,20 @@ def test_is_dark_mode_dark(app):
     assert app._is_dark_mode() is True
 
 
+def test_is_dark_mode_system_brightness_dark(app, mock_page):
+    """_is_dark_mode should return True when system brightness is dark."""
+    app.theme_mode = ft.ThemeMode.SYSTEM
+    mock_page.platform_brightness = ft.Brightness.DARK
+    assert app._is_dark_mode() is True
+
+
+def test_is_dark_mode_system_brightness_light(app, mock_page):
+    """_is_dark_mode should return False when system brightness is light."""
+    app.theme_mode = ft.ThemeMode.SYSTEM
+    mock_page.platform_brightness = ft.Brightness.LIGHT
+    assert app._is_dark_mode() is False
+
+
 def test_get_icon_suffix_dark(app):
     """_get_icon_suffix should return '-dark' in dark mode."""
     app.theme_mode = ft.ThemeMode.DARK
@@ -115,8 +129,6 @@ def test_set_window_icon_missing(app, mock_page):
     """_set_window_icon should not crash if icon file is missing."""
     with patch("os.path.exists", return_value=False):
         app._set_window_icon()
-
-    # Should not raise; update may have been called during init, so just verify no crash
 
 
 def test_on_play_state_change(app, mock_page):
@@ -150,7 +162,6 @@ def test_on_missing_tracks_from_user(app, mock_page):
     """_on_missing_tracks should show dialog for user-triggered missing tracks."""
     app._on_missing_tracks(["song1.mp3"], from_user=True)
     mock_page.show_dialog.assert_called_once()
-    # update may be called multiple times; just verify it was called
     mock_page.update.assert_called()
 
 
@@ -158,7 +169,6 @@ def test_on_missing_tracks_auto_single(app, mock_page):
     """_on_missing_tracks should show SnackBar for auto-skipped single track."""
     app._on_missing_tracks(["song1.mp3"], from_user=False)
     mock_page.show_dialog.assert_called_once()
-    # update may be called multiple times; just verify it was called
     mock_page.update.assert_called()
 
 
@@ -182,7 +192,6 @@ def test_call_player_method_no_player_route(app, mock_page):
     mock_view.controls = [MagicMock()]
     mock_page.views = [mock_view]
 
-    # Should not raise
     app._call_player_method("refresh_play_state", True)
 
 
@@ -231,7 +240,6 @@ def test_on_route_change_fallback(app, mock_page):
 
     app._on_route_change(MagicMock())
 
-    # Should have attempted fallback
     assert mock_page.route == "/library"
     app._show_fallback_view.assert_called_once()
 
@@ -272,7 +280,7 @@ def test_load_key_bindings_custom(app, mock_db):
     mock_db.get_setting.return_value = json.dumps(custom)
     bindings = app._load_key_bindings()
     assert bindings["play_pause"] == "KeyP"
-    assert bindings["next_track"] == "N"  # default preserved
+    assert bindings["next_track"] == "N"
 
 
 def test_on_global_keyboard_play_pause(app, mock_page, mock_audio_player):
@@ -332,7 +340,6 @@ def test_on_global_keyboard_volume_up(app, mock_page, mock_audio_player):
 def test_on_global_keyboard_key_capture(app, mock_page):
     """_on_global_keyboard should use key capture callback if active."""
     mock_capture = MagicMock()
-    # session.store is a dict; set the key directly
     mock_page.session.store["__key_capture_callback"] = mock_capture
 
     event = MagicMock()
@@ -356,7 +363,7 @@ def test_on_view_pop_multiple_views(app, mock_page):
 
     asyncio.run(app._on_view_pop(MagicMock()))
 
-    assert len(mock_page.views) == 2  # popped one, then pushed one back
+    assert len(mock_page.views) == 2
 
 
 def test_on_view_pop_single_view_mobile(app, mock_page, mock_db):
@@ -466,5 +473,27 @@ def test_refresh_watch_scanner(app, mock_page, mock_db):
 def test_refresh_watch_scanner_no_scanner(app, mock_page, mock_db):
     """refresh_watch_scanner should do nothing if scanner is missing."""
     app._watch_scanner = None
-    # Should not raise
     app.refresh_watch_scanner()
+
+
+def test_update_metadata_with_track(app, mock_page):
+    """_update_metadata should load metadata and update current_metadata."""
+    mock_trepo = MagicMock()
+    mock_trepo.get_track_by_path.return_value = MagicMock(
+        id=1, art_uri="/art.jpg"
+    )
+    with patch.dict("sys.modules", {"data.track_repository": mock_trepo}), \
+         patch("app.get_metadata", return_value=MagicMock(art_bytes=None)):
+        app._update_metadata("/song.mp3")
+
+    assert app.current_metadata is not None
+
+
+def test_update_metadata_without_track(app, mock_page):
+    """_update_metadata should set current_metadata to None if track not found."""
+    mock_trepo = MagicMock()
+    mock_trepo.get_track_by_path.return_value = None
+    with patch.dict("sys.modules", {"data.track_repository": mock_trepo}):
+        app._update_metadata("/nonexistent.mp3")
+
+    assert app.current_metadata is None
