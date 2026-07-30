@@ -49,7 +49,6 @@ def test_show_error_silent_failure(mock_page):
     from main import _show_error
 
     mock_page.update.side_effect = Exception("update failed")
-    # Should not raise
     _show_error(mock_page, "启动失败", Exception("boom"))
 
 
@@ -77,7 +76,6 @@ def test_main_exception_shows_error(mock_page):
         from main import main
         main(mock_page)
 
-    # Should have called _show_error (views cleared and error view added)
     assert len(mock_page.views) == 1
     assert mock_page.views[0].route == "/error"
 
@@ -89,7 +87,6 @@ def test_main_file_picker_created(mock_page):
     mock_app_instance = MagicMock()
     mock_app_cls.return_value = mock_app_instance
 
-    # Ensure file_picker is not set initially
     if hasattr(mock_page, "file_picker"):
         del mock_page.file_picker
 
@@ -97,9 +94,30 @@ def test_main_file_picker_created(mock_page):
         from main import main
         main(mock_page)
 
-    # After main(), file_picker should be set
     assert hasattr(mock_page, "file_picker")
     assert mock_page.file_picker is not None
+
+
+def test_main_file_picker_fallback_internal(mock_page):
+    """main() should fallback to _file_picker if public API fails."""
+    mock_db = MagicMock()
+    mock_app_cls = MagicMock()
+    mock_app_instance = MagicMock()
+    mock_app_cls.return_value = mock_app_instance
+
+    # Simulate public API raising, internal API working
+    mock_page.file_picker = None
+    type(mock_page).file_picker = property(
+        lambda self: (_ for _ in ()).throw(Exception("public api failed")),
+        lambda self, v: setattr(self, "_file_picker_val", v),
+    )
+
+    with patch.dict(sys.modules, {"data.db": mock_db, "app": MagicMock(GroovyBoxApp=mock_app_cls)}):
+        from main import main
+        main(mock_page)
+
+    # Should have set _file_picker as fallback
+    assert hasattr(mock_page, "_file_picker")
 
 
 def test_main_route_set_to_library(mock_page):
@@ -113,7 +131,6 @@ def test_main_route_set_to_library(mock_page):
         from main import main
         main(mock_page)
 
-    # GroovyBoxApp should have been instantiated (which sets route in real app)
     mock_app_cls.assert_called_once_with(mock_page)
 
 
@@ -122,15 +139,11 @@ def test_home_writable_check(monkeypatch, tmp_path):
     import os
     from unittest.mock import patch
 
-    # Simulate non-writable HOME by setting FLET_APP_DATA_DIR which
-    # triggers the mobile path in get_app_data_dir
     monkeypatch.setenv("FLET_APP_DATA_DIR", str(tmp_path))
 
-    # Re-import to trigger the logic
     import importlib
     import main as main_module
     with patch("flet.run"):
         importlib.reload(main_module)
 
-    # When FLET_APP_DATA_DIR is set, HOME should not be changed
     assert os.environ.get("HOME") != str(tmp_path / "Library" / "Application Support")
