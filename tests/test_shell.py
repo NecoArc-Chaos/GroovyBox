@@ -50,7 +50,6 @@ def test_shell_view_initialization_early_init_none_width(mock_page):
     mock_page.platform = "ios"
     shell = ShellView(mock_page)
 
-    # Should use platform detection
     assert shell._is_mobile is True
 
 
@@ -87,6 +86,15 @@ def test_detect_mobile_none_width_mobile_platform(mock_page):
 
     mock_page.width = None
     mock_page.platform = "iphone"
+    assert ShellView._detect_mobile(mock_page) is True
+
+
+def test_detect_mobile_ipad(mock_page):
+    """_detect_mobile should return True for iPad platform."""
+    from ui.shell import ShellView
+
+    mock_page.width = 800
+    mock_page.platform = "ipad"
     assert ShellView._detect_mobile(mock_page) is True
 
 
@@ -176,6 +184,19 @@ def test_build_global_bg_wrapper_active(mock_page):
         shell._page = mock_page
         result = shell._build_global_bg_wrapper(MagicMock())
         assert result is not None
+
+
+def test_build_global_bg_wrapper_file_not_exist(mock_page):
+    """_build_global_bg_wrapper should return None when bg file does not exist."""
+    from ui.shell import ShellView
+
+    mock_db = MagicMock()
+    mock_db.get_setting.side_effect = lambda key, default: "/bg.jpg" if key == "global_bg_path" else "false"
+    with patch("ui.shell.db", mock_db), patch("os.path.isfile", return_value=False):
+        shell = ShellView.__new__(ShellView)
+        shell._page = mock_page
+        result = shell._build_global_bg_wrapper(MagicMock())
+        assert result is None
 
 
 def test_go_back_playlist(mock_page):
