@@ -1,9 +1,7 @@
 """Tests for watch_scanner.py."""
 
 import asyncio
-import os
-import threading
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -317,7 +315,7 @@ def test_on_file_deleted_missing_track(mock_trepo):
 
 def test_track_change_handler_on_created_audio():
     """_TrackChangeHandler should schedule import for audio files."""
-    from logic.watch_scanner import _TrackChangeHandler, WatchScanner
+    from logic.watch_scanner import WatchScanner, _TrackChangeHandler
 
     scanner = WatchScanner()
     handler = _TrackChangeHandler(scanner)
@@ -334,7 +332,7 @@ def test_track_change_handler_on_created_audio():
 
 def test_track_change_handler_on_created_directory():
     """_TrackChangeHandler should ignore directory creation."""
-    from logic.watch_scanner import _TrackChangeHandler, WatchScanner
+    from logic.watch_scanner import WatchScanner, _TrackChangeHandler
 
     scanner = WatchScanner()
     handler = _TrackChangeHandler(scanner)
@@ -350,7 +348,7 @@ def test_track_change_handler_on_created_directory():
 
 def test_track_change_handler_on_modified_non_audio():
     """_TrackChangeHandler should ignore non-audio file modifications."""
-    from logic.watch_scanner import _TrackChangeHandler, WatchScanner
+    from logic.watch_scanner import WatchScanner, _TrackChangeHandler
 
     scanner = WatchScanner()
     handler = _TrackChangeHandler(scanner)
@@ -366,7 +364,7 @@ def test_track_change_handler_on_modified_non_audio():
 
 def test_track_change_handler_on_deleted_audio():
     """_TrackChangeHandler should schedule deletion for audio files."""
-    from logic.watch_scanner import _TrackChangeHandler, WatchScanner
+    from logic.watch_scanner import WatchScanner, _TrackChangeHandler
 
     scanner = WatchScanner()
     handler = _TrackChangeHandler(scanner)
@@ -382,7 +380,7 @@ def test_track_change_handler_on_deleted_audio():
 
 def test_track_change_handler_on_moved_audio():
     """_TrackChangeHandler should schedule add and delete for moved audio files."""
-    from logic.watch_scanner import _TrackChangeHandler, WatchScanner
+    from logic.watch_scanner import WatchScanner, _TrackChangeHandler
 
     scanner = WatchScanner()
     handler = _TrackChangeHandler(scanner)
@@ -399,7 +397,7 @@ def test_track_change_handler_on_moved_audio():
 
 def test_track_change_handler_schedule_no_loop():
     """_TrackChangeHandler._schedule should do nothing if loop is None."""
-    from logic.watch_scanner import _TrackChangeHandler, WatchScanner
+    from logic.watch_scanner import WatchScanner, _TrackChangeHandler
 
     scanner = WatchScanner()
     handler = _TrackChangeHandler(scanner)
@@ -411,7 +409,7 @@ def test_track_change_handler_schedule_no_loop():
 
 def test_track_change_handler_schedule_loop_not_running():
     """_TrackChangeHandler._schedule should do nothing if loop is not running."""
-    from logic.watch_scanner import _TrackChangeHandler, WatchScanner
+    from logic.watch_scanner import WatchScanner, _TrackChangeHandler
 
     scanner = WatchScanner()
     handler = _TrackChangeHandler(scanner)

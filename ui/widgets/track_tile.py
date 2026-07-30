@@ -6,22 +6,24 @@ and optional trailing actions. Used across library, playlist,
 and artist screens.
 """
 
+from collections.abc import Callable
+
 import flet as ft
-from typing import Optional, Callable
+
 from data.models import Track
-from logic.metadata_service import format_duration
 from logic.localize import tr
+from logic.metadata_service import format_duration
 from ui.widgets.universal_image import UniversalImage
 
 
 def TrackTile(
     track: Track,
-    on_tap: Optional[Callable] = None,
-    on_long_press: Optional[Callable] = None,
+    on_tap: Callable | None = None,
+    on_long_press: Callable | None = None,
     is_playing: bool = False,
     show_trailing: bool = False,
-    on_trailing_pressed: Optional[Callable] = None,
-    leading: Optional[ft.Control] = None,
+    on_trailing_pressed: Callable | None = None,
+    leading: ft.Control | None = None,
     padding: float = 8,
     trailing_icon: str = ft.Icons.MORE_VERT,
     is_missing: bool = False,
@@ -101,9 +103,11 @@ def TrackTile(
         on_long_press=on_long_press,
     )
 
-    return ft.Container(
+    container = ft.Container(
         content=tile,
         bgcolor=bg,
         border_radius=8,
         padding=ft.Padding(16, padding - 8, 16, padding - 8) if padding != 8 else ft.Padding(16, 0, 16, 0),
     )
+    container.is_missing = is_missing
+    return container

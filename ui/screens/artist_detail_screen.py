@@ -7,11 +7,13 @@ edit metadata, and delete.
 """
 
 import os
+
 import flet as ft
+
 from data import playlist_repository as prepo
 from logic.localize import tr
+from ui.widgets.track_actions import show_add_to_playlist, show_edit_dialog, show_track_details
 from ui.widgets.track_tile import TrackTile
-from ui.widgets.track_actions import show_track_details, show_edit_dialog, show_add_to_playlist
 
 
 def ArtistDetailScreen(page: ft.Page, artist_name: str) -> ft.Control:
@@ -38,25 +40,31 @@ def ArtistDetailScreen(page: ft.Page, artist_name: str) -> ft.Control:
     # Artist header with avatar and info
     header = ft.Container(
         padding=16,
-        content=ft.Row([
-            ft.Container(
-                width=80, height=80, border_radius=40,
-                bgcolor=ft.Colors.with_opacity(0.2, ft.Colors.PRIMARY),
-                alignment=ft.Alignment(0, 0),
-                content=ft.Icon(ft.Icons.PERSON, size=40, color=ft.Colors.PRIMARY),
-            ),
-            ft.Container(width=16),
-            ft.Column([
-                ft.Text(artist_name, size=22, weight=ft.FontWeight.BOLD),
-                ft.Text(
-                    f"{len(tracks)} {tr('tracks')}",
-                    size=13,
-                    color=ft.Colors.with_opacity(0.7, ft.Colors.ON_SURFACE),
+        content=ft.Row(
+            [
+                ft.Container(
+                    width=80,
+                    height=80,
+                    border_radius=40,
+                    bgcolor=ft.Colors.with_opacity(0.2, ft.Colors.PRIMARY),
+                    alignment=ft.Alignment(0, 0),
+                    content=ft.Icon(ft.Icons.PERSON, size=40, color=ft.Colors.PRIMARY),
                 ),
-            ]),
-            ft.Container(expand=True),
-            ft.FilledButton(tr("playAll"), on_click=play_all),
-        ]),
+                ft.Container(width=16),
+                ft.Column(
+                    [
+                        ft.Text(artist_name, size=22, weight=ft.FontWeight.BOLD),
+                        ft.Text(
+                            f"{len(tracks)} {tr('tracks')}",
+                            size=13,
+                            color=ft.Colors.with_opacity(0.7, ft.Colors.ON_SURFACE),
+                        ),
+                    ]
+                ),
+                ft.Container(expand=True),
+                ft.FilledButton(tr("playAll"), on_click=play_all),
+            ]
+        ),
     )
 
     # Build track tiles
@@ -81,18 +89,23 @@ def ArtistDetailScreen(page: ft.Page, artist_name: str) -> ft.Control:
 
     def _show_options(track):
         """Show the context menu for a track."""
+
         def do_add_to_pl(e):
             page.pop_dialog()
             _show_add_to_playlist(track)
+
         def do_view_details(e):
             page.pop_dialog()
             _show_track_details(track)
+
         def do_edit(e):
             page.pop_dialog()
             _show_edit_dialog(track)
+
         def do_delete(e):
             page.pop_dialog()
             from data import track_repository as trepo
+
             trepo.delete_track(track.id)
             page.run_task(page.push_route, "/library")
 
@@ -140,10 +153,13 @@ def ArtistDetailScreen(page: ft.Page, artist_name: str) -> ft.Control:
         controls=[
             header,
             ft.Divider(height=1),
-            ft.Container(expand=True, content=ft.Column(
-                spacing=2,
-                scroll=ft.ScrollMode.AUTO,
-                controls=track_tiles,
-            )),
+            ft.Container(
+                expand=True,
+                content=ft.Column(
+                    spacing=2,
+                    scroll=ft.ScrollMode.AUTO,
+                    controls=track_tiles,
+                ),
+            ),
         ],
     )

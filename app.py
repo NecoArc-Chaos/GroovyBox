@@ -7,18 +7,19 @@ callbacks, and UI synchronization between screens.
 
 import asyncio
 import json
+import os
 import time
 from datetime import datetime
-from typing import List
+
 import flet as ft
-from logic.logger import logger
-from logic.localize import tr, load_locale
+
 from data import db
 from data import track_repository as trepo
-from logic.metadata_service import get_metadata
 from logic.key_bindings import DEFAULT_KEY_BINDINGS
+from logic.localize import load_locale, tr
+from logic.logger import logger
+from logic.metadata_service import get_metadata
 from logic.tray_manager import SystemTrayManager
-import os
 
 
 class GroovyBoxApp:
@@ -54,6 +55,7 @@ class GroovyBoxApp:
 
         # Configure logging level from saved settings
         from logic.logger import set_log_level
+
         set_log_level(db.get_setting("log_level", "normal"))
 
         # Store app reference in session for access from other components
@@ -61,12 +63,14 @@ class GroovyBoxApp:
 
         # Initialize background watch folder scanner
         from logic.watch_scanner import WatchScanner
+
         self._watch_scanner = WatchScanner()
         self._watch_scanner.set_loop(asyncio.get_running_loop())
         self._watch_scanner.start()
 
         # Initialize audio player with flet_audio backend
         from logic.audio_handler import AudioPlayer
+
         self.audio_player = AudioPlayer(page)
 
         # Register audio event callbacks
@@ -173,7 +177,7 @@ class GroovyBoxApp:
     def _on_window_event(self, e):
         if self._is_closing:
             return
-        evt_type = getattr(e, 'type', None) or getattr(e, 'name', None) or getattr(e, 'data', None) or ''
+        evt_type = getattr(e, "type", None) or getattr(e, "name", None) or getattr(e, "data", None) or ""
         if "close" in str(evt_type).lower():
             self._handle_close()
 
@@ -226,7 +230,7 @@ class GroovyBoxApp:
             self._tray_manager.stop()
         self._is_closing = True
         # Shut down audio player cleanly
-        if hasattr(self, 'audio_player') and self.audio_player:
+        if hasattr(self, "audio_player") and self.audio_player:
             try:
                 self.audio_player.shutdown()
             except Exception as ex:
@@ -239,9 +243,11 @@ class GroovyBoxApp:
                 await self.page.window.close()
             except Exception:
                 import os
+
                 os._exit(0)
         finally:
             from data.db import close_thread_connection
+
             close_thread_connection()
 
     def _on_tray_show(self):
@@ -316,9 +322,7 @@ class GroovyBoxApp:
             return
         try:
             with db.get_connection() as conn:
-                folders = conn.execute(
-                    "SELECT path, id FROM watch_folders WHERE is_active=1"
-                ).fetchall()
+                folders = conn.execute("SELECT path, id FROM watch_folders WHERE is_active=1").fetchall()
             self._watch_scanner._watched_paths.clear()
             for row in folders:
                 self._watch_scanner.add_watch(row["path"], row["id"])
@@ -398,7 +402,7 @@ class GroovyBoxApp:
         except Exception as ex:
             logger.warning(f"_on_position_change skipped: {ex}")
 
-    def _on_missing_tracks(self, names: List[str], from_user: bool):
+    def _on_missing_tracks(self, names: list[str], from_user: bool):
         """Handle missing track files during playback.
 
         Shows an AlertDialog for explicit user actions (play/queue),
@@ -424,9 +428,7 @@ class GroovyBoxApp:
                 self.page.show_dialog(dlg)
                 self.page.update()
             elif not from_user and len(names) == 1:
-                self.page.show_dialog(
-                    ft.SnackBar(ft.Text(f"File not found: {names[0]}"), duration=3000)
-                )
+                self.page.show_dialog(ft.SnackBar(ft.Text(f"File not found: {names[0]}"), duration=3000))
                 self.page.update()
         except Exception as ex:
             logger.warning(f"_on_missing_tracks failed: {ex}")
@@ -443,7 +445,7 @@ class GroovyBoxApp:
         """
         if len(self.page.views) > 0:
             top = self.page.views[-1]
-            if getattr(top, 'route', None) == "/player" and top.controls:
+            if getattr(top, "route", None) == "/player" and top.controls:
                 ctrl = top.controls[0]
                 method = getattr(ctrl, method_name, None)
                 if method:
@@ -459,6 +461,7 @@ class GroovyBoxApp:
             path: File path of the audio track.
         """
         from data import track_repository as trepo
+
         track = trepo.get_track_by_path(path)
         if track:
             meta = get_metadata(path)
@@ -484,6 +487,7 @@ class GroovyBoxApp:
         This is the absolute last resort to prevent a black screen.
         Displays a simple message and a retry button.
         """
+
         def on_retry(e):
             self.page.views.clear()
             self.page.route = "/library"
@@ -575,14 +579,14 @@ class GroovyBoxApp:
             route = self.page.route
             if route == "/player" and self.page.views:
                 top = self.page.views[-1]
-                if top.controls and hasattr(top.controls[0], 'on_window_size_changed'):
+                if top.controls and hasattr(top.controls[0], "on_window_size_changed"):
                     top.controls[0].on_window_size_changed()
                 return
             if self.shell and self.shell.content_view.controls:
                 content_screen = self.shell.content_view.controls[0]
-                if hasattr(content_screen, 'on_window_size_changed'):
+                if hasattr(content_screen, "on_window_size_changed"):
                     content_screen.on_window_size_changed()
-                if self.shell and hasattr(self.shell, 'on_window_size_changed'):
+                if self.shell and hasattr(self.shell, "on_window_size_changed"):
                     self.shell.on_window_size_changed()
         except Exception as ex:
             logger.warning(f"_notify_active_screen_window_resize failed: {ex}")
@@ -706,9 +710,11 @@ class GroovyBoxApp:
         if route == "/player":
             self.page.views.clear()
             from ui.screens.player_screen import PlayerScreen
+
             v = ft.View(
                 route="/player",
-                padding=0, spacing=0,
+                padding=0,
+                spacing=0,
                 controls=[PlayerScreen(self.page)],
             )
             self.page.views.append(v)
@@ -722,42 +728,52 @@ class GroovyBoxApp:
         # All other routes use the shell layout (toolbar + content + mini player)
         self.page.views.clear()
         from ui.shell import ShellView
+
         self.shell = ShellView(self.page)
 
         # Determine which content screen to display
         if route == "/" or route == "/library":
             from ui.screens.library_screen import LibraryScreen
+
             content = LibraryScreen(self.page)
         elif route == "/artist":
             from ui.screens.artist_detail_screen import ArtistDetailScreen
+
             artist = self.page.session.store.get("artist_data")
             if artist:
                 content = ArtistDetailScreen(self.page, artist)
             else:
                 from ui.screens.library_screen import LibraryScreen
+
                 content = LibraryScreen(self.page)
         elif route == "/settings":
             from ui.screens.settings_screen import SettingsScreen
+
             content = SettingsScreen(self.page)
         elif route == "/album":
             from ui.screens.album_detail_screen import AlbumDetailView
+
             album = self.page.session.store.get("album_data")
             if album:
                 content = AlbumDetailView(self.page, album)
             else:
                 from ui.screens.library_screen import LibraryScreen
+
                 content = LibraryScreen(self.page)
         elif route == "/playlist":
             from ui.screens.playlist_detail_screen import PlaylistDetailView
+
             playlist = self.page.session.store.get("playlist_data")
             if playlist:
                 content = PlaylistDetailView(self.page, playlist)
             else:
                 from ui.screens.library_screen import LibraryScreen
+
                 content = LibraryScreen(self.page)
         else:
             # Default to library screen for unknown routes
             from ui.screens.library_screen import LibraryScreen
+
             content = LibraryScreen(self.page)
 
         # Assemble the shell with content and mini player

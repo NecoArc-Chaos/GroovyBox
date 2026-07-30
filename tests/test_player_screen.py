@@ -1,9 +1,10 @@
 """Tests for player screen logic."""
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
+
 from ui.screens.player_screen import PlayerScreen
-from data.models import Track, CurrentTrackData
 
 
 @pytest.fixture

@@ -1,35 +1,29 @@
 """Tests for track repository module."""
 
-import pytest
 import os
 import tempfile
 import time
+
+import pytest
+
 from data import db
+from data.models import Track
 from data.track_repository import (
-    _row_to_track,
-    _copy_to_music_dir,
+    AUDIO_EXTENSIONS,
+    LYRICS_EXTENSIONS,
     _get_music_dir,
-    watch_all_tracks,
+    _row_to_track,
+    clear_all_tracks,
+    count_tracks,
+    delete_track,
+    delete_tracks,
+    get_missing_tracks,
     get_track,
     get_track_by_path,
     import_files,
-    import_files_async,
-    scan_directory,
-    scan_directory_async,
     update_metadata,
-    update_art_uri,
-    update_lyrics,
-    update_lyrics_offset,
-    delete_track,
-    delete_tracks,
-    clear_all_tracks,
-    get_missing_tracks,
-    count_tracks,
-    AUDIO_EXTENSIONS,
-    LYRICS_EXTENSIONS,
+    watch_all_tracks,
 )
-from data.models import Track
-from logic.metadata_service import get_metadata
 
 
 @pytest.fixture(autouse=True)

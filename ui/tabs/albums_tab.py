@@ -1,4 +1,5 @@
 import flet as ft
+
 from data import playlist_repository as prepo
 from logic.localize import tr
 
@@ -48,8 +49,20 @@ def _album_card(page: ft.Page, album, on_open):
                         tight=True,
                         spacing=2,
                         controls=[
-                            ft.Text(album.album, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS, size=13, weight=ft.FontWeight.W_500),
-                            ft.Text(album.artist, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS, size=11, color=ft.Colors.with_opacity(0.7, ft.Colors.ON_SURFACE)),
+                            ft.Text(
+                                album.album,
+                                max_lines=1,
+                                overflow=ft.TextOverflow.ELLIPSIS,
+                                size=13,
+                                weight=ft.FontWeight.W_500,
+                            ),
+                            ft.Text(
+                                album.artist,
+                                max_lines=1,
+                                overflow=ft.TextOverflow.ELLIPSIS,
+                                size=11,
+                                color=ft.Colors.with_opacity(0.7, ft.Colors.ON_SURFACE),
+                            ),
                         ],
                     ),
                 ),

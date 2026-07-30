@@ -7,13 +7,15 @@ language selection, database management, and log export.
 
 import json
 import os
-import flet as ft
 import threading
+
+import flet as ft
+
 from data import db
 from data import track_repository as trepo
-from logic.localize import tr, load_locale, get_locale
+from logic.key_bindings import ACTION_NAMES, ACTION_ORDER, DEFAULT_KEY_BINDINGS
+from logic.localize import get_locale, load_locale, tr
 from logic.logger import logger
-from logic.key_bindings import DEFAULT_KEY_BINDINGS, ACTION_NAMES, ACTION_ORDER
 
 
 def SettingsScreen(page: ft.Page) -> ft.Column:
@@ -72,10 +74,13 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
 
     def _build_global_bg_ui():
         """Build the global background image picker UI."""
+
         async def _pick_global_bg(_):
             from logic.file_dialog import pick_files
-            paths = await pick_files(page, tr("selectImage"),
-                ["jpg", "jpeg", "png", "webp", "bmp"], allow_multiple=False)
+
+            paths = await pick_files(
+                page, tr("selectImage"), ["jpg", "jpeg", "png", "webp", "bmp"], allow_multiple=False
+            )
             if paths:
                 db.set_setting("global_bg_path", paths[0])
                 page.update()
@@ -90,13 +95,20 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
             if app:
                 app._reload_ui()
 
-        return ft.Column(visible=True, spacing=8, controls=[
-            ft.Row(alignment=ft.MainAxisAlignment.CENTER, controls=[
-                ft.FilledButton(tr("selectImage"), on_click=lambda e: page.run_task(_pick_global_bg, e)),
-                ft.Container(width=12),
-                ft.OutlinedButton(tr("clearImage"), on_click=_clear_global_bg),
-            ]),
-        ])
+        return ft.Column(
+            visible=True,
+            spacing=8,
+            controls=[
+                ft.Row(
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    controls=[
+                        ft.FilledButton(tr("selectImage"), on_click=lambda e: page.run_task(_pick_global_bg, e)),
+                        ft.Container(width=12),
+                        ft.OutlinedButton(tr("clearImage"), on_click=_clear_global_bg),
+                    ],
+                ),
+            ],
+        )
 
     def on_auto_scan_change(e):
         """Handle auto-scan toggle change."""
@@ -140,9 +152,11 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
 
     async def add_library(e):
         from logic.file_dialog import pick_directory
+
         path = await pick_directory(page, title=tr("selectMusicLibraryFolder"))
         if path:
             import os
+
             name = os.path.basename(path)
             try:
                 with db.get_connection() as conn:
@@ -177,6 +191,7 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
 
     def reset_database(e):
         """Show confirmation dialog for database reset."""
+
         def confirm_yes(e):
             trepo.clear_all_tracks()
             page.pop_dialog()
@@ -223,7 +238,9 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
             content=ft.Text(tr("missingTracksFound").format(len(missing)) + "\n\n" + names),
             actions=[
                 ft.TextButton(tr("cancel"), on_click=confirm_no),
-                ft.FilledButton(tr("removeAllMissing"), bgcolor=ft.Colors.RED, color=ft.Colors.WHITE, on_click=confirm_yes),
+                ft.FilledButton(
+                    tr("removeAllMissing"), bgcolor=ft.Colors.RED, color=ft.Colors.WHITE, on_click=confirm_yes
+                ),
             ],
         )
         page.show_dialog(dlg)
@@ -276,13 +293,16 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
         lvl = e.control.value
         db.set_setting("log_level", lvl)
         from logic.logger import set_log_level
+
         set_log_level(lvl)
         refresh()
 
     async def export_logs(e):
+        import tempfile
+
         from logic.file_dialog import save_file
         from logic.logger import export_logs as _export_logs
-        import tempfile
+
         tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8")
         tmp_path = tmp.name
         tmp.close()
@@ -290,8 +310,9 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
             _export_logs(tmp_path)
             with open(tmp_path, "rb") as f:
                 log_bytes = f.read()
-            saved = await save_file(page, title=tr("exportLogs"), default_name="groovybox_logs.txt",
-                                   extensions=["txt"], src_bytes=log_bytes)
+            saved = await save_file(
+                page, title=tr("exportLogs"), default_name="groovybox_logs.txt", extensions=["txt"], src_bytes=log_bytes
+            )
             if saved:
                 page.show_dialog(ft.SnackBar(ft.Text(tr("logsExported", saved))))
                 logger.info(f"Logs exported to {saved}")
@@ -301,6 +322,7 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
         finally:
             try:
                 import os
+
                 os.unlink(tmp_path)
             except Exception:
                 pass
@@ -311,7 +333,8 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
     def _build_hotkey_row(ak):
         kd = ft.Text(
             bindings.get(ak, DEFAULT_KEY_BINDINGS.get(ak, "?")),
-            size=13, weight=ft.FontWeight.BOLD,
+            size=13,
+            weight=ft.FontWeight.BOLD,
         )
         kd_widgets[ak] = kd
 
@@ -335,7 +358,9 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                 db.set_setting("key_bindings", json.dumps(bindings, ensure_ascii=False))
                 kd.value = key
                 kd.update()
+
             page.session.store.set("__key_capture_callback", _on_capture)
+
         return ft.Container(
             content=ft.Row(
                 tight=True,
@@ -393,7 +418,6 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                     ],
                 ),
             ),
-
             # Music Libraries Section
             ft.Container(
                 bgcolor=ft.Colors.SURFACE_CONTAINER,
@@ -409,8 +433,12 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                                 ft.Row(
                                     tight=True,
                                     controls=[
-                                        ft.IconButton(ft.Icons.REFRESH, tooltip=tr("scanLibraries"), on_click=scan_libraries),
-                                        ft.IconButton(ft.Icons.ADD, tooltip=tr("addMusicLibrary"), on_click=add_library),
+                                        ft.IconButton(
+                                            ft.Icons.REFRESH, tooltip=tr("scanLibraries"), on_click=scan_libraries
+                                        ),
+                                        ft.IconButton(
+                                            ft.Icons.ADD, tooltip=tr("addMusicLibrary"), on_click=add_library
+                                        ),
                                     ],
                                 ),
                             ],
@@ -420,7 +448,6 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                     ],
                 ),
             ),
-
             # Player Settings Section
             ft.Container(
                 bgcolor=ft.Colors.SURFACE_CONTAINER,
@@ -443,15 +470,15 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                             ),
                         ),
                         ft.ListTile(
-                        title=ft.Text(tr("lyricsMode")),
-                        trailing=ft.Dropdown(
-                            value=settings["lyrics_mode"],
-                            options=[
-                                ft.dropdown.Option("auto", tr("lyricsModeAuto")),
-                                ft.dropdown.Option("curved", tr("lyricsModeCurved")),
-                                ft.dropdown.Option("flat", tr("lyricsModeFlat")),
-                            ],
-                            on_select=on_lyrics_mode_change,
+                            title=ft.Text(tr("lyricsMode")),
+                            trailing=ft.Dropdown(
+                                value=settings["lyrics_mode"],
+                                options=[
+                                    ft.dropdown.Option("auto", tr("lyricsModeAuto")),
+                                    ft.dropdown.Option("curved", tr("lyricsModeCurved")),
+                                    ft.dropdown.Option("flat", tr("lyricsModeFlat")),
+                                ],
+                                on_select=on_lyrics_mode_change,
                             ),
                         ),
                         ft.Switch(
@@ -473,7 +500,9 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                                 ft.Container(expand=True),
                                 ft.Slider(
                                     value=int(db.get_setting("blur_intensity", "30")),
-                                    min=1, max=100, divisions=99,
+                                    min=1,
+                                    max=100,
+                                    divisions=99,
                                     expand=True,
                                     on_change=lambda e: save_setting("blur_intensity", str(int(e.control.value))),
                                 ),
@@ -482,7 +511,6 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                     ],
                 ),
             ),
-
             # App Settings Section
             ft.Container(
                 bgcolor=ft.Colors.SURFACE_CONTAINER,
@@ -520,20 +548,30 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                         ft.Switch(
                             label=tr("hideGlobalBg"),
                             value=db.get_setting("global_bg_hidden", "false") == "true",
-                            on_change=lambda e: (save_setting("global_bg_hidden", e.control.value), page.session.store.get("app") and page.session.store.get("app")._reload_ui()),
+                            on_change=lambda e: (
+                                save_setting("global_bg_hidden", e.control.value),
+                                page.session.store.get("app") and page.session.store.get("app")._reload_ui(),
+                            ),
                         ),
                         _build_global_bg_ui(),
                         ft.Column(
-                            visible=page.platform in (ft.PagePlatform.WINDOWS, ft.PagePlatform.LINUX, ft.PagePlatform.MACOS),
+                            visible=page.platform
+                            in (ft.PagePlatform.WINDOWS, ft.PagePlatform.LINUX, ft.PagePlatform.MACOS),
                             controls=[
                                 ft.Divider(height=1),
                                 ft.Text(tr("closeBehavior"), size=14, weight=ft.FontWeight.BOLD),
                                 ft.RadioGroup(
-                                    content=ft.Column([
-                                        ft.Radio(value="hide", label=tr("closeBehaviorHide")),
-                                        ft.Radio(value="exit", label=tr("closeBehaviorExit")),
-                                    ]),
-                                    value="hide" if db.get_setting("close_behavior", "hide") not in ("hide", "exit") else db.get_setting("close_behavior", "hide"),
+                                    content=ft.Column(
+                                        [
+                                            ft.Radio(value="hide", label=tr("closeBehaviorHide")),
+                                            ft.Radio(value="exit", label=tr("closeBehaviorExit")),
+                                        ]
+                                    ),
+                                    value=(
+                                        "hide"
+                                        if db.get_setting("close_behavior", "hide") not in ("hide", "exit")
+                                        else db.get_setting("close_behavior", "hide")
+                                    ),
                                     on_change=lambda e: save_setting("close_behavior", e.control.value),
                                 ),
                             ],
@@ -541,7 +579,6 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                     ],
                 ),
             ),
-
             # Database Management Section
             ft.Container(
                 bgcolor=ft.Colors.SURFACE_CONTAINER,
@@ -622,8 +659,11 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                         ft.Container(height=4),
                         *hotkey_rows,
                         ft.Container(height=4),
-                        ft.Text(tr("keyboardShortcutsNote"),
-                            size=11, color=ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE)),
+                        ft.Text(
+                            tr("keyboardShortcutsNote"),
+                            size=11,
+                            color=ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE),
+                        ),
                     ],
                 ),
             ),
@@ -637,10 +677,20 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                     controls=[
                         ft.Text(tr("appName"), size=20, weight=ft.FontWeight.BOLD),
                         ft.Text(f"v{_build_version}", size=14, color=ft.Colors.with_opacity(0.7, ft.Colors.ON_SURFACE)),
-                        ft.Text(f"Build {_build_number}", size=11, color=ft.Colors.with_opacity(0.5, ft.Colors.ON_SURFACE)),
+                        ft.Text(
+                            f"Build {_build_number}", size=11, color=ft.Colors.with_opacity(0.5, ft.Colors.ON_SURFACE)
+                        ),
                         ft.Container(height=8),
-                        ft.Text("GNU General Public License v3.0", size=12, color=ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE)),
-                        ft.Text("Copyright \u00A9 2026 luolingy", size=12, color=ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE)),
+                        ft.Text(
+                            "GNU General Public License v3.0",
+                            size=12,
+                            color=ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE),
+                        ),
+                        ft.Text(
+                            "Copyright \u00a9 2026 luolingy",
+                            size=12,
+                            color=ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE),
+                        ),
                         ft.Container(height=8),
                         ft.Divider(height=1),
                         ft.Container(height=4),
@@ -666,10 +716,14 @@ def SettingsScreen(page: ft.Page) -> ft.Column:
                             tight=True,
                             alignment=ft.MainAxisAlignment.CENTER,
                             controls=[
-                                ft.Text("Contributors: ", size=12, color=ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE)),
+                                ft.Text(
+                                    "Contributors: ", size=12, color=ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE)
+                                ),
                                 ft.TextButton("luolingy", url="https://github.com/luolingy"),
-ft.TextButton("符跃 万界(logo)", url="https://qm.qq.com/q/vMovFQlrj2"),			ft.TextButton("ZhiH", url="https://github.com/ZhiH2333"),
-ft.TextButton("符跃 万界(logo)", url="https://qm.qq.com/q/vMovFQlrj2"),			ft.TextButton("符跃 万界(logo)", url="https://qm.qq.com/q/vMovFQlrj2"),
+                                ft.TextButton("符跃 万界(logo)", url="https://qm.qq.com/q/vMovFQlrj2"),
+                                ft.TextButton("ZhiH", url="https://github.com/ZhiH2333"),
+                                ft.TextButton("符跃 万界(logo)", url="https://qm.qq.com/q/vMovFQlrj2"),
+                                ft.TextButton("符跃 万界(logo)", url="https://qm.qq.com/q/vMovFQlrj2"),
                             ],
                         ),
                     ],
@@ -682,13 +736,15 @@ ft.TextButton("符跃 万界(logo)", url="https://qm.qq.com/q/vMovFQlrj2"),			ft
     return ft.Column(
         expand=True,
         scroll=ft.ScrollMode.AUTO,
-        controls=[ft.Container(
-            expand=True,
-            padding=16,
-            alignment=ft.Alignment(0, -1),
-            content=ft.Container(
-                width=min(640, page.width - 32) if page.width else 640,
-                content=content,
-            ),
-        )],
+        controls=[
+            ft.Container(
+                expand=True,
+                padding=16,
+                alignment=ft.Alignment(0, -1),
+                content=ft.Container(
+                    width=min(640, page.width - 32) if page.width else 640,
+                    content=content,
+                ),
+            )
+        ],
     )

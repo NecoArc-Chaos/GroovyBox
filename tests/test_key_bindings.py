@@ -1,6 +1,5 @@
 """Tests for key_bindings.py."""
 
-import pytest
 
 
 def test_default_key_bindings_keys():

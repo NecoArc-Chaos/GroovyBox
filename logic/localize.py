@@ -28,7 +28,7 @@ def load_locale(lang: str):
     _locale = lang
     path = os.path.join(os.path.dirname(__file__), "..", "assets", "locales", f"{lang}.json")
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             _strings = json.load(f)
     except FileNotFoundError:
         _strings = {}

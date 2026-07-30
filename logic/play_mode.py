@@ -2,12 +2,11 @@
 
 import flet as ft
 
-
 _PLAY_MODE_CYCLE = [
-    (False, "all"),    # List repeat
-    (False, "one"),    # Single repeat
-    (True,  "none"),   # Shuffle
-    (False, "none"),   # Sequential
+    (False, "all"),  # List repeat
+    (False, "one"),  # Single repeat
+    (True, "none"),  # Shuffle
+    (False, "none"),  # Sequential
 ]
 
 

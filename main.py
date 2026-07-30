@@ -64,9 +64,11 @@ def main(page: ft.Page):
                 pass
 
         from data import db
+
         db.init_database()
 
         from app import GroovyBoxApp
+
         GroovyBoxApp(page)
 
         # NOTE: GroovyBoxApp.__init__ already sets page.route = "/library"

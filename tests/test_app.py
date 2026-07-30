@@ -2,7 +2,7 @@
 
 import asyncio
 import json
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import flet as ft
 import pytest
@@ -58,6 +58,8 @@ def app(mock_page, mock_db, mock_audio_player):
 
     mock_page.session.store = SessionStore()
     with patch.dict("sys.modules", {"data.db": mock_db, "logic.audio_handler": MagicMock(AudioPlayer=MagicMock(return_value=mock_audio_player))}):
+        import app as _app_module
+        _app_module.db = mock_db
         from app import GroovyBoxApp
         mock_loop = MagicMock()
         with patch("asyncio.get_running_loop", return_value=mock_loop):
@@ -344,6 +346,7 @@ def test_on_global_keyboard_key_capture(app, mock_page):
 
     event = MagicMock()
     event.key = "A"
+    mock_page.update.reset_mock()
     app._on_global_keyboard(event)
 
     mock_capture.assert_called_once_with("A")
@@ -482,7 +485,7 @@ def test_update_metadata_with_track(app, mock_page):
     mock_trepo.get_track_by_path.return_value = MagicMock(
         id=1, art_uri="/art.jpg"
     )
-    with patch.dict("sys.modules", {"data.track_repository": mock_trepo}), \
+    with patch("data.track_repository", mock_trepo), \
          patch("app.get_metadata", return_value=MagicMock(art_bytes=None)):
         app._update_metadata("/song.mp3")
 
@@ -493,7 +496,8 @@ def test_update_metadata_without_track(app, mock_page):
     """_update_metadata should set current_metadata to None if track not found."""
     mock_trepo = MagicMock()
     mock_trepo.get_track_by_path.return_value = None
-    with patch.dict("sys.modules", {"data.track_repository": mock_trepo}):
+    with patch("data.track_repository", mock_trepo), \
+         patch("app.get_metadata", return_value=MagicMock(art_bytes=None)):
         app._update_metadata("/nonexistent.mp3")
 
     assert app.current_metadata is None

@@ -6,7 +6,11 @@ Reads configuration from build-config.json and handles platform-specific
 options like Android signing and iOS provisioning.
 """
 
-import json, subprocess, sys, os, shutil
+import json
+import os
+import shutil
+import subprocess
+import sys
 
 DESKTOP_PLATFORMS = ("windows", "linux", "macos")
 EXTRA_DESKTOP_DEPS = "# desktop-only dependencies\npystray>=0.19.0\n"
@@ -45,7 +49,7 @@ def ensure_mobile_deps(plat: str):
     req = "requirements.txt"
     with open(req, encoding="utf-8") as f:
         lines = f.readlines()
-    
+
     new_lines = []
     removed = []
     for line in lines:
@@ -54,7 +58,7 @@ def ensure_mobile_deps(plat: str):
             removed.append(stripped)
             continue
         new_lines.append(line)
-    
+
     if removed:
         with open(req, "w", encoding="utf-8") as f:
             f.writelines(new_lines)
@@ -108,7 +112,7 @@ def build_cmd(platform: str):
         "ios": "ipa",
     }
     platform = PLATFORM_ALIASES.get(platform, platform)
-    
+
     cfg = load_config()
     app = cfg["app"]
     android = cfg.get("android", {})
@@ -146,7 +150,7 @@ def build_cmd(platform: str):
         bg = android.get("adaptive_icon_background")
         if bg:
             cmd += ["--android-adaptive-icon-background", bg]
-        
+
         # Android signing configuration (from environment variables)
         ks = "keystore.jks"
         ks_pass = os.environ.get("ANDROID_KEYSTORE_PASSWORD", "")
@@ -170,7 +174,7 @@ def build_cmd(platform: str):
                 cmd += ["--info-plist", f"{key}={ 'true' if val else 'false'}"]
             else:
                 cmd += ["--info-plist", f"{key}={val}"]
-        
+
         # iOS signing configuration (optional; only added when environment variables are present)
         # In the release workflow, signing is disabled by default. To enable, set:
         #   - IOS_TEAM_ID

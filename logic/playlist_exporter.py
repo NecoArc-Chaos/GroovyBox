@@ -9,9 +9,9 @@ import os
 import shutil
 import tempfile
 import zipfile
-from typing import List
+
 from data import playlist_repository as prepo
-from data.models import Track, Playlist
+from data.models import Playlist, Track
 
 
 def export_playlist(
@@ -52,16 +52,16 @@ def export_playlist(
     base_name = os.path.splitext(os.path.basename(output_path))[0]
 
     if as_zip:
-        return _export_as_zip(playlist, tracks, output_path, out_dir, base_name,
-                              use_relpath, include_lyrics, include_covers)
+        return _export_as_zip(
+            playlist, tracks, output_path, out_dir, base_name, use_relpath, include_lyrics, include_covers
+        )
     else:
-        return _export_m3u(playlist, tracks, output_path, out_dir,
-                           use_relpath, include_lyrics, include_covers)
+        return _export_m3u(playlist, tracks, output_path, out_dir, use_relpath, include_lyrics, include_covers)
 
 
 def _export_m3u(
     playlist: Playlist,
-    tracks: List[Track],
+    tracks: list[Track],
     output_path: str,
     out_dir: str,
     use_relpath: bool,
@@ -115,7 +115,7 @@ def _export_m3u(
 
 def _export_as_zip(
     playlist: Playlist,
-    tracks: List[Track],
+    tracks: list[Track],
     output_path: str,
     out_dir: str,
     base_name: str,
@@ -147,8 +147,15 @@ def _export_as_zip(
 
         # Generate M3U inside the temp directory
         m3u_path = os.path.join(inner_dir, f"{base_name}.m3u")
-        _export_m3u(playlist, tracks, m3u_path, inner_dir, use_relpath=False,
-                     include_lyrics=include_lyrics, include_covers=include_covers)
+        _export_m3u(
+            playlist,
+            tracks,
+            m3u_path,
+            inner_dir,
+            use_relpath=False,
+            include_lyrics=include_lyrics,
+            include_covers=include_covers,
+        )
 
         # Copy audio files to the temp directory
         for t in tracks:
@@ -203,6 +210,7 @@ def _write_lyrics_file(path: str, lyrics_json: str):
     """
     try:
         from logic.lyrics_parser import lyrics_from_json
+
         data = lyrics_from_json(lyrics_json)
         if data and data.lines:
             if data.type == "timed":

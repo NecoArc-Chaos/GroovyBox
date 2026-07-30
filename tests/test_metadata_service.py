@@ -1,7 +1,6 @@
 """Tests for metadata service module."""
 
-import pytest
-from logic.metadata_service import get_metadata, format_duration, SUPPORTED_EXTENSIONS
+from logic.metadata_service import SUPPORTED_EXTENSIONS, format_duration, get_metadata
 
 
 def test_format_duration_none():

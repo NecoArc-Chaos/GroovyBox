@@ -25,11 +25,15 @@ def _detect_with_chardet(path):
     """
     try:
         import chardet
+
         with open(path, "rb") as f:
             raw = f.read(min(8192, os.path.getsize(path)))
         result = chardet.detect(raw)
         if result and result["encoding"] and result["confidence"] > 0.5:
-            return result["encoding"]
+            enc = result["encoding"]
+            if enc.lower() == "ascii":
+                return "utf-8"
+            return enc
     except ImportError:
         pass
     except Exception:
@@ -87,7 +91,7 @@ def detect_encoding(path):
     # Strategy 3: Try common encodings
     for enc in COMMON_ENCODINGS:
         try:
-            with open(path, "r", encoding=enc) as f:
+            with open(path, encoding=enc) as f:
                 f.read()
             return enc
         except (UnicodeDecodeError, UnicodeError):
@@ -111,10 +115,10 @@ def read_with_encoding(path, encoding_hint=None):
     """
     if encoding_hint:
         try:
-            with open(path, "r", encoding=encoding_hint) as f:
+            with open(path, encoding=encoding_hint) as f:
                 return f.read()
         except (UnicodeDecodeError, UnicodeError):
             pass
     enc = detect_encoding(path)
-    with open(path, "r", encoding=enc, errors="replace") as f:
+    with open(path, encoding=enc, errors="replace") as f:
         return f.read()

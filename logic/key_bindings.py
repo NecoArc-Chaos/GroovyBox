@@ -23,7 +23,12 @@ ACTION_NAMES = {
 }
 
 ACTION_ORDER = [
-    "play_pause", "next_track", "prev_track",
-    "volume_up", "volume_down", "seek_back", "seek_forward",
+    "play_pause",
+    "next_track",
+    "prev_track",
+    "volume_up",
+    "volume_down",
+    "seek_back",
+    "seek_forward",
     "exit_player",
 ]

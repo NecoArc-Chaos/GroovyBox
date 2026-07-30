@@ -6,6 +6,7 @@ to the artist detail screen.
 """
 
 import flet as ft
+
 from data import playlist_repository as prepo
 from logic.localize import tr
 from ui.widgets.universal_image import UniversalImage
@@ -41,30 +42,35 @@ def AlbumsByArtistScreen(page: ft.Page) -> ft.Control:
     cards = []
     for art in artists:
         card = ft.Container(
-            content=ft.Column([
-                UniversalImage(
-                    uri=art.albums[0].art_uri if art.albums else None,
-                    width=80, height=80,
-                    border_radius=40,
-                    fallback_icon=ft.Icons.PERSON,
-                    fallback_icon_size=40,
-                ),
-                ft.Container(height=8),
-                ft.Text(
-                    art.artist,
-                    max_lines=2,
-                    overflow=ft.TextOverflow.ELLIPSIS,
-                    size=14,
-                    weight=ft.FontWeight.W_500,
-                    text_align=ft.TextAlign.CENTER,
-                ),
-                ft.Text(
-                    f"{len(art.albums)} {tr('albums')} \u2022 {art.track_count} {tr('tracks')}",
-                    size=11,
-                    color=ft.Colors.with_opacity(0.7, ft.Colors.ON_SURFACE),
-                    text_align=ft.TextAlign.CENTER,
-                ),
-            ], tight=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            content=ft.Column(
+                [
+                    UniversalImage(
+                        uri=art.albums[0].art_uri if art.albums else None,
+                        width=80,
+                        height=80,
+                        border_radius=40,
+                        fallback_icon=ft.Icons.PERSON,
+                        fallback_icon_size=40,
+                    ),
+                    ft.Container(height=8),
+                    ft.Text(
+                        art.artist,
+                        max_lines=2,
+                        overflow=ft.TextOverflow.ELLIPSIS,
+                        size=14,
+                        weight=ft.FontWeight.W_500,
+                        text_align=ft.TextAlign.CENTER,
+                    ),
+                    ft.Text(
+                        f"{len(art.albums)} {tr('albums')} \u2022 {art.track_count} {tr('tracks')}",
+                        size=11,
+                        color=ft.Colors.with_opacity(0.7, ft.Colors.ON_SURFACE),
+                        text_align=ft.TextAlign.CENTER,
+                    ),
+                ],
+                tight=True,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
             bgcolor=ft.Colors.SURFACE_CONTAINER,
             border_radius=12,
             padding=16,

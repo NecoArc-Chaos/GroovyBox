@@ -1,5 +1,5 @@
-import threading
 import sys
+import threading
 
 # pystray is desktop-only and imports X11/AppKit backends at module load time,
 # which crashes on Android/iOS. Guard by platform so mobile never attempts it.
@@ -8,6 +8,7 @@ if not _MOBILE:
     try:
         import pystray
         from PIL import Image
+
         _HAS_TRAY = True
     except Exception:
         _HAS_TRAY = False

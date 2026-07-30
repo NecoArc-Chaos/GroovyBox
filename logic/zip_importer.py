@@ -7,14 +7,14 @@ lyrics, and playlist files. Used for importing bundled music collections.
 import os
 import tempfile
 import zipfile
-from typing import List, Tuple
+
 from data.track_repository import AUDIO_EXTENSIONS, LYRICS_EXTENSIONS
 
 # Supported playlist file extensions within ZIP archives
 PLAYLIST_EXTENSIONS = {"m3u", "m3u8", "pls"}
 
 
-def extract_zip(zip_path: str, dest_dir: str = None) -> Tuple[List[str], List[str], List[str]]:
+def extract_zip(zip_path: str, dest_dir: str = None) -> tuple[list[str], list[str], list[str]]:
     """Extract a ZIP archive and categorize the contained files.
 
     Extracts all files from the ZIP archive and categorizes them into

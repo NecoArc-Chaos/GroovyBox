@@ -7,11 +7,13 @@ and a persistent mini player at the bottom.
 """
 
 import os
+
 import flet as ft
-from logic.localize import tr
-from logic.logger import logger
+
 from data import db
 from data.track_repository import AUDIO_EXTENSIONS, LYRICS_EXTENSIONS
+from logic.localize import tr
+from logic.logger import logger
 from ui.widgets.mini_player import MiniPlayerWidget
 
 
@@ -68,7 +70,10 @@ class ShellView(ft.View):
                 controls=[
                     body,
                     ft.GestureDetector(
-                        left=0, top=0, bottom=0, width=40,
+                        left=0,
+                        top=0,
+                        bottom=0,
+                        width=40,
                         on_horizontal_drag_start=self._on_back_drag_start,
                         on_horizontal_drag_update=self._on_back_drag_update,
                         on_horizontal_drag_end=self._on_back_drag_end,
@@ -99,7 +104,9 @@ class ShellView(ft.View):
         try:
             w = page.width
             if w is not None and w >= 600:
-                return False
+                # Large width but could still be a tablet (iPad).
+                # Use platform string as tie-breaker.
+                return ShellView._platform_is_mobile(page)
             if w is not None and w < 600:
                 # Narrow window — could be mobile or resized desktop.
                 # Use platform string as tie-breaker.
@@ -173,7 +180,7 @@ class ShellView(ft.View):
             if self.app:
                 self.app._reload_ui()
             return
-        if hasattr(self.mini_player, 'on_window_size_changed'):
+        if hasattr(self.mini_player, "on_window_size_changed"):
             self.mini_player.on_window_size_changed()
 
     def _build_toolbar(self):
@@ -219,6 +226,7 @@ class ShellView(ft.View):
         Returns:
             A NavigationBar with Library, Playlists, and Settings destinations.
         """
+
         def on_nav_change(e):
             selected_index = e.control.selected_index
             if selected_index == 0:
@@ -261,6 +269,7 @@ class ShellView(ft.View):
         - ZIP: Extract and import from ZIP archives
         - Path: Manual path entry
         """
+
         def do_files(e):
             self._page.pop_dialog()
             self._page.run_task(self._import_files)
@@ -285,12 +294,20 @@ class ShellView(ft.View):
             content=ft.Column(
                 tight=True,
                 controls=[
-                    ft.ListTile(leading=ft.Icon(ft.Icons.AUDIOTRACK), title=ft.Text(tr("importAudioFiles")), on_click=do_files),
-                    ft.ListTile(leading=ft.Icon(ft.Icons.FOLDER_OPEN), title=ft.Text(tr("importFolder")), on_click=do_folder),
-                    ft.ListTile(leading=ft.Icon(ft.Icons.QUEUE_MUSIC), title=ft.Text(tr("importPlaylist")), on_click=do_playlist),
+                    ft.ListTile(
+                        leading=ft.Icon(ft.Icons.AUDIOTRACK), title=ft.Text(tr("importAudioFiles")), on_click=do_files
+                    ),
+                    ft.ListTile(
+                        leading=ft.Icon(ft.Icons.FOLDER_OPEN), title=ft.Text(tr("importFolder")), on_click=do_folder
+                    ),
+                    ft.ListTile(
+                        leading=ft.Icon(ft.Icons.QUEUE_MUSIC), title=ft.Text(tr("importPlaylist")), on_click=do_playlist
+                    ),
                     ft.ListTile(leading=ft.Icon(ft.Icons.FOLDER_ZIP), title=ft.Text(tr("importZip")), on_click=do_zip),
                     ft.Divider(),
-                    ft.ListTile(leading=ft.Icon(ft.Icons.KEYBOARD), title=ft.Text(tr("importFromPath")), on_click=do_path),
+                    ft.ListTile(
+                        leading=ft.Icon(ft.Icons.KEYBOARD), title=ft.Text(tr("importFromPath")), on_click=do_path
+                    ),
                 ],
             ),
         )
@@ -306,6 +323,7 @@ class ShellView(ft.View):
             paths: Optional list of file paths. If None, opens file picker.
         """
         from logic.file_dialog import pick_files
+
         all_ext = list(AUDIO_EXTENSIONS | LYRICS_EXTENSIONS)
         if paths is None:
             paths = await pick_files(self._page, title="Select files to import", extensions=all_ext)
@@ -332,11 +350,13 @@ class ShellView(ft.View):
     async def _import_folder(self):
         """Import all audio files from a selected folder."""
         from logic.file_dialog import pick_directory
+
         folder = await pick_directory(self._page, title=tr("importFolder"))
         if not folder:
             return
         logger.info(f"_import_folder: {folder}")
         from data import track_repository as trepo
+
         n = await trepo.scan_directory_async(folder)
         logger.info(f"Imported {n} files from folder")
         await self._reload_after_import()
@@ -344,11 +364,13 @@ class ShellView(ft.View):
     async def _import_playlist_file(self):
         """Import audio files referenced in M3U/PLS playlist files."""
         from logic.file_dialog import pick_files
+
         paths = await pick_files(self._page, title=tr("importPlaylist"), extensions=["m3u", "m3u8", "pls"])
         if not paths:
             return
-        from logic.playlist_parser import parse_playlist
         from data import track_repository as trepo
+        from logic.playlist_parser import parse_playlist
+
         all_audio = []
         for pp in paths:
             all_audio.extend(parse_playlist(pp))
@@ -360,13 +382,16 @@ class ShellView(ft.View):
     async def _import_zip(self):
         """Import audio files from ZIP archives."""
         from logic.file_dialog import pick_files
+
         paths = await pick_files(self._page, title=tr("importZip"), extensions=["zip"])
         if not paths:
             return
-        from logic.zip_importer import extract_zip
-        from data import track_repository as trepo
-        import tempfile
         import shutil
+        import tempfile
+
+        from data import track_repository as trepo
+        from logic.zip_importer import extract_zip
+
         all_audio = []
         all_lyrics = []
         temp_dirs = []
@@ -379,6 +404,7 @@ class ShellView(ft.View):
             # Parse any playlist files found in the ZIP
             for pp in playlist_files:
                 from logic.playlist_parser import parse_playlist
+
                 all_audio.extend(parse_playlist(pp))
         if all_audio:
             n = await trepo.import_files_async(all_audio, copy=True)
@@ -437,6 +463,7 @@ class ShellView(ft.View):
             path: The file or directory path to import.
         """
         import os
+
         from data import track_repository as trepo
 
         if not os.path.exists(path):
@@ -461,6 +488,7 @@ class ShellView(ft.View):
         # Playlist file: parse and import referenced files
         elif ext in ("m3u", "m3u8", "pls"):
             from logic.playlist_parser import parse_playlist
+
             audio_paths = parse_playlist(path)
             if audio_paths:
                 n = await trepo.import_files_async(audio_paths)
@@ -470,13 +498,16 @@ class ShellView(ft.View):
 
         # ZIP archive: extract and import contents
         elif ext == "zip":
-            from logic.zip_importer import extract_zip
-            import tempfile
             import shutil
+            import tempfile
+
+            from logic.zip_importer import extract_zip
+
             dest = tempfile.mkdtemp(prefix="groovybox_zip_")
             audio_files, lyrics_files, playlist_files = extract_zip(path, dest)
             for pp in playlist_files:
                 from logic.playlist_parser import parse_playlist
+
                 audio_files.extend(parse_playlist(pp))
             n_audio = 0
             if audio_files:
@@ -507,9 +538,11 @@ class ShellView(ft.View):
         Args:
             lyrics_paths: List of absolute paths to lyrics files.
         """
-        from logic.encoding_helper import read_with_encoding
-        from data import track_repository as trepo
         import os
+
+        from data import track_repository as trepo
+        from logic.encoding_helper import read_with_encoding
+
         all_tracks = trepo.watch_all_tracks()
         matched = 0
         not_matched = 0
@@ -523,7 +556,8 @@ class ShellView(ft.View):
                     break
             if match:
                 content = read_with_encoding(lp)
-                from logic.lyrics_parser import parse, lyrics_to_json
+                from logic.lyrics_parser import lyrics_to_json, parse
+
                 ldata = parse(content, os.path.basename(lp))
                 trepo.update_lyrics(match.id, lyrics_to_json(ldata))
                 matched += 1
@@ -540,6 +574,7 @@ class ShellView(ft.View):
         the newly imported tracks.
         """
         from data import track_repository as trepo
+
         n = len(trepo.watch_all_tracks())
         logger.info("_reload_after_import: %d tracks in DB, reloading UI", n)
         self._page.update()

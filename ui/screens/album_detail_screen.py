@@ -5,7 +5,9 @@ the album art, play controls, and a list of tracks in the album.
 """
 
 import os
+
 import flet as ft
+
 from data import playlist_repository as prepo
 from logic.localize import tr
 from ui.widgets.track_tile import TrackTile
@@ -56,7 +58,8 @@ class AlbumDetailView(ft.Container):
                     padding=16,
                     alignment=ft.Alignment(0, 0),
                     content=ft.Container(
-                        width=240, height=240,
+                        width=240,
+                        height=240,
                         border_radius=16,
                         clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
                         content=ft.Image(
@@ -76,12 +79,14 @@ class AlbumDetailView(ft.Container):
                         alignment=ft.MainAxisAlignment.CENTER,
                         controls=[
                             ft.FilledButton(
-                                tr("playAll"), icon=ft.Icons.PLAY_ARROW,
+                                tr("playAll"),
+                                icon=ft.Icons.PLAY_ARROW,
                                 on_click=lambda e: self._play_all(),
                             ),
                             ft.Container(width=12),
                             ft.OutlinedButton(
-                                tr("addToQueue"), icon=ft.Icons.QUEUE_MUSIC,
+                                tr("addToQueue"),
+                                icon=ft.Icons.QUEUE_MUSIC,
                                 on_click=lambda e: self._add_to_queue(tracks),
                             ),
                         ],
@@ -102,7 +107,8 @@ class AlbumDetailView(ft.Container):
                                 is_missing=not os.path.isfile(t.path),
                             )
                             for i, t in enumerate(tracks)
-                        ] + [ft.Container(height=80)],
+                        ]
+                        + [ft.Container(height=80)],
                     ),
                 ),
             ],

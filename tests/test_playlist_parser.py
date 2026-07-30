@@ -1,7 +1,6 @@
 """Tests for playlist_parser.py."""
 
 import os
-from unittest.mock import patch
 
 import pytest
 
@@ -13,11 +12,11 @@ def tmp_m3u_file(tmp_path):
     m3u.write_text(
         "#EXTM3U\n"
         "#EXTINF:180,Song A - Artist A\n"
-        "/music/song_a.mp3\n"
+        "music/song_a.mp3\n"
         "# Comment line\n"
         "song_b.mp3\n"
         "\n"
-        "/music/song_c.mp3\n",
+        "music/song_c.mp3\n",
         encoding="utf-8",
     )
     return m3u
@@ -30,7 +29,7 @@ def tmp_m3u8_file(tmp_path):
     m3u8.write_bytes(
         b"\xef\xbb\xbf#EXTM3U\n"
         b"#EXTINF:180,Song A\n"
-        b"/music/song_a.mp3\n"
+        b"music/song_a.mp3\n"
         b"song_b.mp3\n"
     )
     return m3u8
@@ -42,13 +41,13 @@ def tmp_pls_file(tmp_path):
     pls = tmp_path / "test.pls"
     pls.write_text(
         "[playlist]\n"
-        "File1=/music/song_a.mp3\n"
+        "File1=music/song_a.mp3\n"
         "Title1=Song A\n"
         "Length1=180\n"
-        "File2=song_b.mp3\n"
-        "Title2=Song B\n"
-        "Length2=200\n"
-        "NumberOfEntries=2\n",
+        "File10=music/song_j.mp3\n"
+        "Title10=Song J\n"
+        "Length10=200\n"
+        "File2=song_b.mp3\n",
         encoding="utf-8",
     )
     return pls
@@ -58,7 +57,7 @@ def tmp_pls_file(tmp_path):
 def tmp_gbk_m3u_file(tmp_path):
     """Create a temporary M3U file with GBK encoding."""
     m3u = tmp_path / "test_gbk.m3u"
-    content = "#EXTM3U\n#EXTINF:180,歌曲 A\n/music/song_a.mp3\n"
+    content = "#EXTM3U\n#EXTINF:180,歌曲 A\nmusic/song_a.mp3\n"
     m3u.write_bytes(content.encode("gbk"))
     return m3u
 
@@ -70,7 +69,7 @@ def test_parse_m3u_basic(tmp_m3u_file, tmp_path):
     # Create the referenced files
     (tmp_path / "music").mkdir(exist_ok=True)
     (tmp_path / "music" / "song_a.mp3").write_text("fake")
-    (tmp_path / "music" / "song_b.mp3").write_text("fake")
+    (tmp_path / "music" / "song_c.mp3").write_text("fake")
     (tmp_path / "song_b.mp3").write_text("fake")  # Relative path
 
     result = parse_m3u(str(tmp_m3u_file))
@@ -160,8 +159,8 @@ def test_parse_pls_regex_matching(tmp_path):
     pls = tmp_path / "test.pls"
     pls.write_text(
         "[playlist]\n"
-        "File1=/music/song_a.mp3\n"
-        "File10=/music/song_j.mp3\n"
+        "File1=music/song_a.mp3\n"
+        "File10=music/song_j.mp3\n"
         "File2=song_b.mp3\n",
         encoding="utf-8",
     )
@@ -180,7 +179,7 @@ def test_parse_pls_encoding_fallback(tmp_path):
     from logic.playlist_parser import parse_pls
 
     pls = tmp_path / "test.pls"
-    pls.write_bytes(b"[playlist]\nFile1=/music/song.mp3\n")
+    pls.write_bytes(b"[playlist]\nFile1=music/song.mp3\n")
 
     (tmp_path / "music").mkdir(exist_ok=True)
     (tmp_path / "music" / "song.mp3").write_text("fake")
@@ -227,7 +226,7 @@ def test_parse_playlist_unknown_extension(tmp_path):
     from logic.playlist_parser import parse_playlist
 
     m3u = tmp_path / "test.unknown"
-    m3u.write_text("/music/song.mp3\n", encoding="utf-8")
+    m3u.write_text("music/song.mp3\n", encoding="utf-8")
 
     (tmp_path / "music").mkdir(exist_ok=True)
     (tmp_path / "music" / "song.mp3").write_text("fake")

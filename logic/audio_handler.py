@@ -7,15 +7,17 @@ The player handles track queue management, playback controls, position
 tracking, and cross-thread UI updates via callbacks.
 """
 
-import threading
 import asyncio
 import os
-from data import db
-import time
 import random
-from typing import Optional, Callable, List
+import threading
+import time
+from collections.abc import Callable
+
 import flet as ft
-from data.models import Track, CurrentTrackData
+
+from data import db
+from data.models import CurrentTrackData, Track
 from logic.logger import logger
 
 
@@ -35,7 +37,7 @@ class AudioPlayer:
 
     def __init__(self, page: ft.Page):
         self.page = page
-        self.queue: List[Track] = []
+        self.queue: list[Track] = []
         self.current_index = -1
         self.shuffle = False
         self.repeat_mode = "none"
@@ -46,18 +48,18 @@ class AudioPlayer:
         self._loading = False
 
         # UI event loop reference for thread-safe callbacks
-        self._ui_loop: Optional[asyncio.AbstractEventLoop] = None
+        self._ui_loop: asyncio.AbstractEventLoop | None = None
 
         # Lock for thread-safe state mutations
         self._state_lock = threading.Lock()
 
         # Callback functions for UI updates
-        self.on_track_change: Optional[Callable] = None
-        self.on_position_change: Optional[Callable] = None
-        self.on_play_state_change: Optional[Callable] = None
-        self.on_queue_change: Optional[Callable] = None
-        self.on_loading_change: Optional[Callable] = None
-        self.on_missing_tracks: Optional[Callable[[List[str], bool], None]] = None
+        self.on_track_change: Callable | None = None
+        self.on_position_change: Callable | None = None
+        self.on_play_state_change: Callable | None = None
+        self.on_queue_change: Callable | None = None
+        self.on_loading_change: Callable | None = None
+        self.on_missing_tracks: Callable[[list[str], bool], None] | None = None
 
         # Timer for position polling; audio instance is created on first play
         self._timer_active = True
@@ -74,6 +76,7 @@ class AudioPlayer:
                 if self.on_position_change:
                     self._call_on_ui(self.on_position_change, pos)
                 time.sleep(0.1)
+
         self._fa_tick_thread = threading.Thread(target=_loop, daemon=True)
         self._fa_tick_thread.start()
 
@@ -106,6 +109,7 @@ class AudioPlayer:
     def _fa_on_state(self, e):
         """Handle state change event from flet_audio (detects track completion)."""
         from flet_audio import AudioState
+
         if e.state == AudioState.COMPLETED:
             self._call_on_ui(self._on_track_ended)
 
@@ -120,6 +124,7 @@ class AudioPlayer:
         """
         try:
             import mutagen
+
             mf = mutagen.File(path)
             if mf and mf.info:
                 return int(mf.info.length * 1000)
@@ -135,9 +140,10 @@ class AudioPlayer:
         Args:
             path: Absolute path to the audio file.
         """
-        from flet_audio import Audio as FletAudio, ReleaseMode
+        from flet_audio import Audio as FletAudio
+        from flet_audio import ReleaseMode
 
-        if hasattr(self, '_audio') and self._audio is not None:
+        if hasattr(self, "_audio") and self._audio is not None:
             try:
                 if self._audio in self.page.services:
                     self.page.services.remove(self._audio)
@@ -198,7 +204,7 @@ class AudioPlayer:
 
     def shutdown(self):
         self._timer_active = False
-        if hasattr(self, '_audio') and self._audio is not None:
+        if hasattr(self, "_audio") and self._audio is not None:
             try:
                 if self._audio in self.page.services:
                     self.page.services.remove(self._audio)
@@ -226,7 +232,7 @@ class AudioPlayer:
         self.current_index = 0
         self._load_current()
 
-    def play_tracks(self, tracks: List[Track], initial_index: int = 0):
+    def play_tracks(self, tracks: list[Track], initial_index: int = 0):
         """Play a list of tracks starting from the specified index.
 
         Args:
@@ -306,11 +312,19 @@ class AudioPlayer:
         if self.on_play_state_change:
             self._call_on_ui(self.on_play_state_change, True)
         if self.on_track_change:
-            self._call_on_ui(self.on_track_change, CurrentTrackData(
-                id=track.id, title=track.title, artist=track.artist,
-                album=track.album, path=track.path, art_uri=track.art_uri,
-                lyrics=track.lyrics, lyrics_offset=track.lyrics_offset,
-            ))
+            self._call_on_ui(
+                self.on_track_change,
+                CurrentTrackData(
+                    id=track.id,
+                    title=track.title,
+                    artist=track.artist,
+                    album=track.album,
+                    path=track.path,
+                    art_uri=track.art_uri,
+                    lyrics=track.lyrics,
+                    lyrics_offset=track.lyrics_offset,
+                ),
+            )
         if self.on_queue_change:
             self._call_on_ui(self.on_queue_change)
 
@@ -401,7 +415,7 @@ class AudioPlayer:
             self._audio.volume = vol
         self.page.update()
 
-    def get_current_track(self) -> Optional[Track]:
+    def get_current_track(self) -> Track | None:
         """Get the currently playing track object.
 
         Returns:

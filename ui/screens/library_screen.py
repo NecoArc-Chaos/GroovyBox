@@ -10,13 +10,15 @@ Includes batch operations for selected tracks (delete, add to playlist/queue).
 """
 
 import os
+
 import flet as ft
-from data import track_repository as trepo
+
 from data import playlist_repository as prepo
+from data import track_repository as trepo
 from logic.localize import tr
-from ui.widgets.track_tile import TrackTile
-from ui.widgets.track_actions import show_track_details, show_edit_dialog
 from logic.logger import logger
+from ui.widgets.track_actions import show_edit_dialog, show_track_details
+from ui.widgets.track_tile import TrackTile
 
 
 class LibraryScreen(ft.Column):
@@ -61,6 +63,11 @@ class LibraryScreen(ft.Column):
         """Execute search after debounce delay."""
         self._build()
         self.update()
+
+    def _on_search_change(self, e):
+        """Handle search field change with debounce."""
+        self.search_query = e.control.value
+        self._search_debounce()
 
     def _build(self):
         """Build the library screen layout.
@@ -134,6 +141,7 @@ class LibraryScreen(ft.Column):
         Returns:
             A Column with tab buttons at top and content below.
         """
+
         def _make_tab(idx, icon, label):
             """Create a styled tab button."""
             is_sel = self.selected_tab == idx
@@ -142,11 +150,13 @@ class LibraryScreen(ft.Column):
                     tight=True,
                     controls=[
                         ft.Icon(
-                            icon, size=18,
+                            icon,
+                            size=18,
                             color=ft.Colors.PRIMARY if is_sel else ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE),
                         ),
                         ft.Text(
-                            label, size=13,
+                            label,
+                            size=13,
                             weight=ft.FontWeight.BOLD if is_sel else ft.FontWeight.NORMAL,
                             color=ft.Colors.PRIMARY if is_sel else ft.Colors.with_opacity(0.6, ft.Colors.ON_SURFACE),
                         ),
@@ -208,9 +218,11 @@ class LibraryScreen(ft.Column):
         """
         if self.selected_tab == 1:
             from ui.screens.albums_by_artist_screen import AlbumsByArtistScreen
+
             return AlbumsByArtistScreen(self._page)
         elif self.selected_tab == 2:
             from ui.screens.playlists_screen import PlaylistsScreen
+
             return PlaylistsScreen(self._page, on_refresh=lambda: (self._build(), self.update()))
         else:
             return self._build_tracks_content()
@@ -236,8 +248,11 @@ class LibraryScreen(ft.Column):
             if self.search_query:
                 q = self.search_query.lower()
                 filtered = sum(
-                    1 for t in all_tracks
-                    if q in t.title.lower() or (t.artist and q in t.artist.lower()) or (t.album and q in t.album.lower())
+                    1
+                    for t in all_tracks
+                    if q in t.title.lower()
+                    or (t.artist and q in t.artist.lower())
+                    or (t.album and q in t.album.lower())
                 )
                 search_hint = tr("searchTracksFiltered", filtered, len(all_tracks))
             else:
@@ -248,11 +263,6 @@ class LibraryScreen(ft.Column):
             self.search_query = e.control.value
             self._build()
             self.update()
-
-        def on_search_change(e):
-            """Handle search field change with debounce."""
-            self.search_query = e.control.value
-            self._search_debounce()
 
         # Build top bar (search or selection)
         if is_sel_mode:
@@ -268,7 +278,7 @@ class LibraryScreen(ft.Column):
                     dense=True,
                     value=self.search_query,
                     on_submit=on_search,
-                    on_change=lambda e: self._search_debounce(),
+                    on_change=self._on_search_change,
                     filled=True,
                     fill_color=ft.Colors.with_opacity(0.08, ft.Colors.ON_SURFACE),
                 ),
@@ -277,6 +287,7 @@ class LibraryScreen(ft.Column):
         # Build missing tracks banner
         missing_banner = None
         if missing_count > 0 and not is_sel_mode:
+
             def do_remove_missing(e):
                 ids = [t.id for t in missing_tracks]
                 trepo.delete_tracks(ids)
@@ -293,7 +304,9 @@ class LibraryScreen(ft.Column):
                         ft.Container(width=8),
                         ft.Text(
                             tr("missingTracksBanner").format(str(missing_count)),
-                            size=12, color=ft.Colors.ERROR, expand=True,
+                            size=12,
+                            color=ft.Colors.ERROR,
+                            expand=True,
                         ),
                         ft.FilledButton(
                             tr("removeAllMissing"),
@@ -311,11 +324,13 @@ class LibraryScreen(ft.Column):
             main = ft.ListView(
                 spacing=2,
                 padding=ft.Padding(0, 120 if missing_banner else 72, 0, 16),
-                controls=[ft.Container(
-                    expand=True,
-                    alignment=ft.Alignment(0, 0),
-                    content=ft.Text(tr("noTracksYet"), color=ft.Colors.GREY),
-                )],
+                controls=[
+                    ft.Container(
+                        expand=True,
+                        alignment=ft.Alignment(0, 0),
+                        content=ft.Text(tr("noTracksYet"), color=ft.Colors.GREY),
+                    )
+                ],
             )
         elif is_sel_mode:
             main = ft.ListView(
@@ -371,6 +386,7 @@ class LibraryScreen(ft.Column):
 
         def do_batch_delete(e):
             self._page.pop_dialog()
+
             def confirm_yes(e):
                 self._page.pop_dialog()
                 for tid in list(self.selected_ids):
@@ -378,8 +394,10 @@ class LibraryScreen(ft.Column):
                 self.selected_ids.clear()
                 self._build()
                 self.update()
+
             def confirm_no(e):
                 self._page.pop_dialog()
+
             dlg = ft.AlertDialog(
                 title=ft.Text(tr("deleteTracks")),
                 content=ft.Text(tr("confirmBatchDelete").replace("{}", str(len(self.selected_ids)))),
@@ -437,9 +455,21 @@ class LibraryScreen(ft.Column):
                 content=ft.Column(
                     tight=True,
                     controls=[
-                        ft.ListTile(leading=ft.Icon(ft.Icons.QUEUE_MUSIC), title=ft.Text(tr("addToQueue")), on_click=do_batch_add_queue),
-                        ft.ListTile(leading=ft.Icon(ft.Icons.PLAYLIST_ADD), title=ft.Text(tr("addToPlaylist")), on_click=do_batch_add_playlist),
-                        ft.ListTile(leading=ft.Icon(ft.Icons.DELETE, color=ft.Colors.RED), title=ft.Text(tr("delete"), color=ft.Colors.RED), on_click=do_batch_delete),
+                        ft.ListTile(
+                            leading=ft.Icon(ft.Icons.QUEUE_MUSIC),
+                            title=ft.Text(tr("addToQueue")),
+                            on_click=do_batch_add_queue,
+                        ),
+                        ft.ListTile(
+                            leading=ft.Icon(ft.Icons.PLAYLIST_ADD),
+                            title=ft.Text(tr("addToPlaylist")),
+                            on_click=do_batch_add_playlist,
+                        ),
+                        ft.ListTile(
+                            leading=ft.Icon(ft.Icons.DELETE, color=ft.Colors.RED),
+                            title=ft.Text(tr("delete"), color=ft.Colors.RED),
+                            on_click=do_batch_delete,
+                        ),
                     ],
                 ),
             )
@@ -545,8 +575,10 @@ class LibraryScreen(ft.Column):
                 on_change=lambda e, tid=t.id: self._toggle_select(tid),
             )
             container = ft.Container(
-                bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.ERROR) if is_missing else (
-                    ft.Colors.with_opacity(0.1, ft.Colors.PRIMARY) if is_sel else ft.Colors.TRANSPARENT
+                bgcolor=(
+                    ft.Colors.with_opacity(0.1, ft.Colors.ERROR)
+                    if is_missing
+                    else (ft.Colors.with_opacity(0.1, ft.Colors.PRIMARY) if is_sel else ft.Colors.TRANSPARENT)
                 ),
                 border_radius=8,
                 content=checkbox,
@@ -609,24 +641,31 @@ class LibraryScreen(ft.Column):
         Args:
             track: The Track object to show options for.
         """
+
         def do_add_to_pl(e):
             self._page.pop_dialog()
             self._show_add_to_playlist(track)
+
         def do_view_details(e):
             self._page.pop_dialog()
             self._show_track_details(track)
+
         def do_edit(e):
             self._page.pop_dialog()
             self._show_edit_dialog(track)
+
         def do_delete(e):
             self._page.pop_dialog()
+
             def confirm_yes(e):
                 self._page.pop_dialog()
                 trepo.delete_track(track.id)
                 self._build()
                 self.update()
+
             def confirm_no(e):
                 self._page.pop_dialog()
+
             dlg = ft.AlertDialog(
                 title=ft.Text(tr("deleteTrack")),
                 content=ft.Text(tr("confirmDeleteTrack").replace("{}", track.title or "")),
@@ -641,10 +680,20 @@ class LibraryScreen(ft.Column):
             content=ft.Column(
                 tight=True,
                 controls=[
-                    ft.ListTile(leading=ft.Icon(ft.Icons.PLAYLIST_ADD), title=ft.Text(tr("addToPlaylist")), on_click=do_add_to_pl),
-                    ft.ListTile(leading=ft.Icon(ft.Icons.INFO), title=ft.Text(tr("viewDetails")), on_click=do_view_details),
+                    ft.ListTile(
+                        leading=ft.Icon(ft.Icons.PLAYLIST_ADD),
+                        title=ft.Text(tr("addToPlaylist")),
+                        on_click=do_add_to_pl,
+                    ),
+                    ft.ListTile(
+                        leading=ft.Icon(ft.Icons.INFO), title=ft.Text(tr("viewDetails")), on_click=do_view_details
+                    ),
                     ft.ListTile(leading=ft.Icon(ft.Icons.EDIT), title=ft.Text(tr("editMetadata")), on_click=do_edit),
-                    ft.ListTile(leading=ft.Icon(ft.Icons.DELETE, color=ft.Colors.RED), title=ft.Text(tr("delete"), color=ft.Colors.RED), on_click=do_delete),
+                    ft.ListTile(
+                        leading=ft.Icon(ft.Icons.DELETE, color=ft.Colors.RED),
+                        title=ft.Text(tr("delete"), color=ft.Colors.RED),
+                        on_click=do_delete,
+                    ),
                 ],
             ),
         )
@@ -681,6 +730,7 @@ class LibraryScreen(ft.Column):
 
     def _show_add_to_playlist(self, track):
         from ui.widgets.track_actions import show_add_to_playlist
+
         show_add_to_playlist(self._page, track)
 
     def _show_track_details(self, track):
@@ -688,5 +738,3 @@ class LibraryScreen(ft.Column):
 
     def _show_edit_dialog(self, track):
         show_edit_dialog(self._page, track, on_saved=lambda: (self._build(), self.update()))
-
-

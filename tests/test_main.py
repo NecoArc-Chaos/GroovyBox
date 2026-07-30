@@ -59,7 +59,9 @@ def test_main_success(mock_page):
     mock_app_instance = MagicMock()
     mock_app_cls.return_value = mock_app_instance
 
-    with patch.dict(sys.modules, {"data.db": mock_db, "app": MagicMock(GroovyBoxApp=mock_app_cls)}):
+    with patch.dict(sys.modules, {"flet": MagicMock(), "app": MagicMock(GroovyBoxApp=mock_app_cls)}), \
+         patch("data.db", mock_db):
+        import main as main_module
         from main import main
         main(mock_page)
 
@@ -72,7 +74,9 @@ def test_main_exception_shows_error(mock_page):
     mock_db = MagicMock()
     mock_db.init_database.side_effect = Exception("db error")
 
-    with patch.dict(sys.modules, {"data.db": mock_db}):
+    with patch.dict(sys.modules, {"flet": MagicMock()}), \
+         patch("data.db", mock_db):
+        import main as main_module
         from main import main
         main(mock_page)
 
@@ -90,7 +94,9 @@ def test_main_file_picker_created(mock_page):
     if hasattr(mock_page, "file_picker"):
         del mock_page.file_picker
 
-    with patch.dict(sys.modules, {"data.db": mock_db, "app": MagicMock(GroovyBoxApp=mock_app_cls)}):
+    with patch.dict(sys.modules, {"flet": MagicMock(), "app": MagicMock(GroovyBoxApp=mock_app_cls)}), \
+         patch("data.db", mock_db):
+        import main as main_module
         from main import main
         main(mock_page)
 
@@ -112,7 +118,9 @@ def test_main_file_picker_fallback_internal(mock_page):
         lambda self, v: setattr(self, "_file_picker_val", v),
     )
 
-    with patch.dict(sys.modules, {"data.db": mock_db, "app": MagicMock(GroovyBoxApp=mock_app_cls)}):
+    with patch.dict(sys.modules, {"flet": MagicMock(), "app": MagicMock(GroovyBoxApp=mock_app_cls)}), \
+         patch("data.db", mock_db):
+        import main as main_module
         from main import main
         main(mock_page)
 
@@ -127,7 +135,9 @@ def test_main_route_set_to_library(mock_page):
     mock_app_instance = MagicMock()
     mock_app_cls.return_value = mock_app_instance
 
-    with patch.dict(sys.modules, {"data.db": mock_db, "app": MagicMock(GroovyBoxApp=mock_app_cls)}):
+    with patch.dict(sys.modules, {"flet": MagicMock(), "app": MagicMock(GroovyBoxApp=mock_app_cls)}), \
+         patch("data.db", mock_db):
+        import main as main_module
         from main import main
         main(mock_page)
 
@@ -142,6 +152,7 @@ def test_home_writable_check(monkeypatch, tmp_path):
     monkeypatch.setenv("FLET_APP_DATA_DIR", str(tmp_path))
 
     import importlib
+
     import main as main_module
     with patch("flet.run"):
         importlib.reload(main_module)

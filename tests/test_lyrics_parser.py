@@ -1,7 +1,6 @@
 """Tests for lyrics parser module."""
 
-import pytest
-from logic.lyrics_parser import parse, lyrics_to_json, lyrics_from_json, LyricsData, LyricsLine
+from logic.lyrics_parser import LyricsData, LyricsLine, lyrics_from_json, lyrics_to_json, parse
 
 
 def test_parse_lrc():

@@ -6,11 +6,9 @@ with WAL journal mode for concurrent read/write performance.
 """
 
 import contextlib
+import os
 import sqlite3
 import threading
-import os
-
-
 
 # Global cached database path to avoid repeated path resolution
 DB_PATH = None
@@ -107,9 +105,11 @@ def close_thread_connection():
 
 def with_conn(func):
     """Decorator that provides a managed database connection."""
+
     def wrapper(*args, **kwargs):
         with get_connection() as conn:
             return func(conn, *args, **kwargs)
+
     return wrapper
 
 
@@ -172,9 +172,7 @@ def get_setting(key: str, default: str = "") -> str:
     if cached is not None:
         return cached
     with get_connection() as conn:
-        row = conn.execute(
-            "SELECT value FROM app_settings WHERE key = ?", (key,)
-        ).fetchone()
+        row = conn.execute("SELECT value FROM app_settings WHERE key = ?", (key,)).fetchone()
     val = row["value"] if row else default
     _SETTING_CACHE[key] = val
     return val

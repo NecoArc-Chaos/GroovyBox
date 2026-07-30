@@ -1,4 +1,5 @@
 import flet as ft
+
 from data import playlist_repository as prepo
 from logic.localize import tr
 
@@ -64,6 +65,7 @@ def build_playlists_list(page: ft.Page, on_open: callable) -> ft.Control:
             )
         )
     else:
+
         def delete_pl(pid):
             prepo.delete_playlist(pid)
             page.update()

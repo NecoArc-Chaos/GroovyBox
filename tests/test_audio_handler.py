@@ -1,9 +1,11 @@
 """Tests for audio handler module."""
 
-import pytest
 from unittest.mock import MagicMock
-from logic.audio_handler import AudioPlayer
+
+import pytest
+
 from data import db
+from logic.audio_handler import AudioPlayer
 
 
 @pytest.fixture

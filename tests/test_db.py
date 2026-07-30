@@ -1,8 +1,9 @@
 """Tests for database module."""
 
-import pytest
-import sqlite3
 import os
+
+import pytest
+
 from data import db
 
 

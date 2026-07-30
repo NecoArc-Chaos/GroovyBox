@@ -5,21 +5,18 @@ Also includes queries for albums, artists, and artist-album relationships
 used by the library browsing screens.
 """
 
-from typing import List
 from data.db import get_connection
-from data.models import Track, Playlist, AlbumData, ArtistAlbums
+from data.models import AlbumData, ArtistAlbums, Playlist, Track
 from data.track_repository import _row_to_track
 
 
-def watch_all_playlists() -> List[Playlist]:
+def watch_all_playlists() -> list[Playlist]:
     with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT * FROM playlists ORDER BY created_at"
-        ).fetchall()
+        rows = conn.execute("SELECT * FROM playlists ORDER BY created_at").fetchall()
     return [_row_to_playlist(r) for r in rows]
 
 
-def watch_playlist_tracks(playlist_id: int) -> List[Track]:
+def watch_playlist_tracks(playlist_id: int) -> list[Track]:
     with get_connection() as conn:
         rows = conn.execute(
             """SELECT t.* FROM tracks t
@@ -31,7 +28,7 @@ def watch_playlist_tracks(playlist_id: int) -> List[Track]:
     return [_row_to_track(r) for r in rows]
 
 
-def set_playlist_track_order(playlist_id: int, track_ids: List[int]):
+def set_playlist_track_order(playlist_id: int, track_ids: list[int]):
     with get_connection() as conn:
         for order, tid in enumerate(track_ids):
             conn.execute(
@@ -43,9 +40,7 @@ def set_playlist_track_order(playlist_id: int, track_ids: List[int]):
 
 def find_by_name(name: str) -> int | None:
     with get_connection() as conn:
-        row = conn.execute(
-            "SELECT id FROM playlists WHERE name = ?", (name,)
-        ).fetchone()
+        row = conn.execute("SELECT id FROM playlists WHERE name = ?", (name,)).fetchone()
     return row[0] if row else None
 
 
@@ -81,14 +76,12 @@ def remove_from_playlist(playlist_id: int, track_id: int):
         conn.commit()
 
 
-def watch_artists_with_albums() -> List[ArtistAlbums]:
+def watch_artists_with_albums() -> list[ArtistAlbums]:
     with get_connection() as conn:
-        rows = conn.execute(
-            """SELECT COALESCE(NULLIF(artist,''), 'Unknown') as artist,
+        rows = conn.execute("""SELECT COALESCE(NULLIF(artist,''), 'Unknown') as artist,
                       album, MIN(art_uri) as art_uri
                FROM tracks WHERE album IS NOT NULL
-               GROUP BY artist, album ORDER BY artist, album"""
-        ).fetchall()
+               GROUP BY artist, album ORDER BY artist, album""").fetchall()
 
         artists_dict = {}
         for r in rows:
@@ -103,8 +96,7 @@ def watch_artists_with_albums() -> List[ArtistAlbums]:
             safe_name = artist_name if artist_name != "Unknown" else ""
             if safe_name:
                 cnt = conn.execute(
-                    "SELECT COUNT(*) as c FROM tracks WHERE artist=? AND album IS NOT NULL",
-                    (safe_name,)
+                    "SELECT COUNT(*) as c FROM tracks WHERE artist=? AND album IS NOT NULL", (safe_name,)
                 ).fetchone()["c"]
             else:
                 cnt = conn.execute(
@@ -112,19 +104,14 @@ def watch_artists_with_albums() -> List[ArtistAlbums]:
                 ).fetchone()["c"]
             data["track_count"] = cnt
 
-    return [
-        ArtistAlbums(artist=a, albums=d["albums"], track_count=d["track_count"])
-        for a, d in artists_dict.items()
-    ]
+    return [ArtistAlbums(artist=a, albums=d["albums"], track_count=d["track_count"]) for a, d in artists_dict.items()]
 
 
-def watch_all_albums() -> List[AlbumData]:
+def watch_all_albums() -> list[AlbumData]:
     with get_connection() as conn:
-        rows = conn.execute(
-            """SELECT album, MIN(artist) as artist, MIN(art_uri) as art_uri
+        rows = conn.execute("""SELECT album, MIN(artist) as artist, MIN(art_uri) as art_uri
                FROM tracks WHERE album IS NOT NULL
-               GROUP BY album ORDER BY album"""
-        ).fetchall()
+               GROUP BY album ORDER BY album""").fetchall()
     return [
         AlbumData(
             album=r["album"],
@@ -135,24 +122,18 @@ def watch_all_albums() -> List[AlbumData]:
     ]
 
 
-def watch_artist_tracks(artist_name: str) -> List[Track]:
+def watch_artist_tracks(artist_name: str) -> list[Track]:
     with get_connection() as conn:
         if artist_name == "Unknown":
-            rows = conn.execute(
-                "SELECT * FROM tracks WHERE (artist IS NULL OR artist='') ORDER BY title"
-            ).fetchall()
+            rows = conn.execute("SELECT * FROM tracks WHERE (artist IS NULL OR artist='') ORDER BY title").fetchall()
         else:
-            rows = conn.execute(
-                "SELECT * FROM tracks WHERE artist=? ORDER BY album, title", (artist_name,)
-            ).fetchall()
+            rows = conn.execute("SELECT * FROM tracks WHERE artist=? ORDER BY album, title", (artist_name,)).fetchall()
     return [_row_to_track(r) for r in rows]
 
 
-def watch_album_tracks(album_name: str) -> List[Track]:
+def watch_album_tracks(album_name: str) -> list[Track]:
     with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT * FROM tracks WHERE album = ? ORDER BY title", (album_name,)
-        ).fetchall()
+        rows = conn.execute("SELECT * FROM tracks WHERE album = ? ORDER BY title", (album_name,)).fetchall()
     return [_row_to_track(r) for r in rows]
 
 

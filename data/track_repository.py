@@ -10,15 +10,16 @@ import asyncio
 import io
 import os
 import shutil
-from typing import List, Optional, Tuple
 import threading
-from data.db import get_connection, get_app_dir, is_mobile
-from logic.logger import logger
+
+from data.db import get_app_dir, get_connection, is_mobile
 from data.models import Track
-from logic.metadata_service import get_metadata, SUPPORTED_EXTENSIONS
+from logic.logger import logger
+from logic.metadata_service import SUPPORTED_EXTENSIONS, get_metadata
 
 try:
     from PIL import Image
+
     _HAS_PIL = True
 except ImportError:
     _HAS_PIL = False
@@ -36,27 +37,25 @@ def _get_music_dir() -> str:
     return music_dir
 
 
-def watch_all_tracks() -> List[Track]:
+def watch_all_tracks() -> list[Track]:
     with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT * FROM tracks ORDER BY title COLLATE NOCASE"
-        ).fetchall()
+        rows = conn.execute("SELECT * FROM tracks ORDER BY title COLLATE NOCASE").fetchall()
     return [_row_to_track(r) for r in rows]
 
 
-def get_track(track_id: int) -> Optional[Track]:
+def get_track(track_id: int) -> Track | None:
     with get_connection() as conn:
         row = conn.execute("SELECT * FROM tracks WHERE id = ?", (track_id,)).fetchone()
     return _row_to_track(row) if row else None
 
 
-def get_track_by_path(path: str) -> Optional[Track]:
+def get_track_by_path(path: str) -> Track | None:
     with get_connection() as conn:
         row = conn.execute("SELECT * FROM tracks WHERE path = ?", (path,)).fetchone()
     return _row_to_track(row) if row else None
 
 
-def _collect_music_files(directory_path: str, recursive: bool) -> List[str]:
+def _collect_music_files(directory_path: str, recursive: bool) -> list[str]:
     files = []
     if recursive:
         for root, _, filenames in os.walk(directory_path):
@@ -98,7 +97,7 @@ def _copy_to_music_dir(src: str) -> str:
     return src
 
 
-def _generate_art_thumb(art_bytes: bytes, size: int = 128) -> Optional[bytes]:
+def _generate_art_thumb(art_bytes: bytes, size: int = 128) -> bytes | None:
     """Generate a JPEG thumbnail from raw album art bytes.
 
     Args:
@@ -121,12 +120,11 @@ def _generate_art_thumb(art_bytes: bytes, size: int = 128) -> Optional[bytes]:
         return None
 
 
-def _do_import(file_paths: List[str], conn, copy: bool = False) -> Tuple[int, List[str]]:
+def _do_import(file_paths: list[str], conn, copy: bool = False) -> tuple[int, list[str]]:
     existing = {
-        r["path"] for r in conn.execute(
-            "SELECT path FROM tracks WHERE path IN ({})".format(
-                ",".join("?" * len(file_paths))
-            ), file_paths
+        r["path"]
+        for r in conn.execute(
+            "SELECT path FROM tracks WHERE path IN ({})".format(",".join("?" * len(file_paths))), file_paths
         ).fetchall()
     }
     new_paths = [p for p in file_paths if p not in existing]
@@ -164,8 +162,7 @@ def _do_import(file_paths: List[str], conn, copy: bool = False) -> Tuple[int, Li
                 """INSERT OR IGNORE INTO tracks
                    (title, artist, album, duration, path, art_uri, art_thumb, lyrics_offset)
                    VALUES (?, ?, ?, ?, ?, ?, ?, 0)""",
-                (title, meta.artist, meta.album,
-                 meta.duration, final_path, art_path, art_thumb),
+                (title, meta.artist, meta.album, meta.duration, final_path, art_path, art_thumb),
             )
             conn.commit()
             imported += 1
@@ -175,7 +172,7 @@ def _do_import(file_paths: List[str], conn, copy: bool = False) -> Tuple[int, Li
     return imported, new_paths
 
 
-def import_files(file_paths: List[str], callback=None, copy: bool = False):
+def import_files(file_paths: list[str], callback=None, copy: bool = False):
     def _import():
         try:
             with get_connection() as conn:
@@ -185,15 +182,16 @@ def import_files(file_paths: List[str], callback=None, copy: bool = False):
                 callback()
         except Exception as e:
             logger.error("import_files thread failed: %s", e)
+
     threading.Thread(target=_import, daemon=True).start()
 
 
-async def import_files_async(file_paths: List[str], copy: bool = False) -> int:
+async def import_files_async(file_paths: list[str], copy: bool = False) -> int:
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, _import_sync, file_paths, copy)
 
 
-def _import_sync(file_paths: List[str], copy: bool = False) -> int:
+def _import_sync(file_paths: list[str], copy: bool = False) -> int:
     with get_connection() as conn:
         imported, new_paths = _do_import(file_paths, conn, copy=copy)
     logger.info("import_files_async: imported %d/%d files", imported, len(new_paths))
@@ -207,6 +205,7 @@ def scan_directory(directory_path: str, recursive: bool = True, callback=None):
             import_files(music_files, callback=callback)
         elif callback:
             callback()
+
     threading.Thread(target=_scan, daemon=True).start()
 
 
@@ -222,7 +221,7 @@ def _scan_sync(directory_path: str, recursive: bool) -> int:
     return 0
 
 
-def update_art_uri(track_id: int, art_path: Optional[str]):
+def update_art_uri(track_id: int, art_path: str | None):
     with get_connection() as conn:
         conn.execute("UPDATE tracks SET art_uri=? WHERE id=?", (art_path, track_id))
         conn.commit()
@@ -237,7 +236,7 @@ def update_metadata(track_id: int, title: str, artist: str = None, album: str = 
         conn.commit()
 
 
-def update_lyrics(track_id: int, lyrics_json: Optional[str]):
+def update_lyrics(track_id: int, lyrics_json: str | None):
     with get_connection() as conn:
         conn.execute("UPDATE tracks SET lyrics=? WHERE id=?", (lyrics_json, track_id))
         conn.commit()
@@ -276,7 +275,7 @@ def clear_all_tracks():
         conn.commit()
 
 
-def get_missing_tracks(since: Optional[str] = None) -> List[Track]:
+def get_missing_tracks(since: str | None = None) -> list[Track]:
     """Find tracks whose files are missing on disk.
 
     Args:
@@ -287,12 +286,11 @@ def get_missing_tracks(since: Optional[str] = None) -> List[Track]:
     Returns:
         List of Track objects with missing files.
     """
-    missing: List[Track] = []
+    missing: list[Track] = []
     with get_connection() as conn:
         if since:
             rows = conn.execute(
-                "SELECT * FROM tracks WHERE last_checked IS NULL OR last_checked < ?",
-                (since,)
+                "SELECT * FROM tracks WHERE last_checked IS NULL OR last_checked < ?", (since,)
             ).fetchall()
         else:
             rows = conn.execute("SELECT * FROM tracks").fetchall()
@@ -312,13 +310,12 @@ def update_last_checked_since(old_time: str, new_time: str):
     """
     with get_connection() as conn:
         conn.execute(
-            "UPDATE tracks SET last_checked = ? WHERE last_checked IS NULL OR last_checked < ?",
-            (new_time, old_time)
+            "UPDATE tracks SET last_checked = ? WHERE last_checked IS NULL OR last_checked < ?", (new_time, old_time)
         )
         conn.commit()
 
 
-def delete_tracks(track_ids: List[int]):
+def delete_tracks(track_ids: list[int]):
     if not track_ids:
         return
     placeholders = ",".join("?" * len(track_ids))

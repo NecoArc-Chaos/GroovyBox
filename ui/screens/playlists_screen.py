@@ -5,6 +5,7 @@ to create new playlists, open existing ones, and delete playlists.
 """
 
 import flet as ft
+
 from data import playlist_repository as prepo
 from logic.localize import tr
 
@@ -114,14 +115,17 @@ def PlaylistsScreen(page: ft.Page, on_refresh=None) -> ft.Control:
 
     def _delete_pl(pid, pname=""):
         """Show confirmation dialog for playlist deletion."""
+
         def confirm_yes(e):
             prepo.delete_playlist(pid)
             page.pop_dialog()
             if on_refresh:
                 on_refresh()
+
         def confirm_no(e):
             dlg.open = False
             page.update()
+
         dlg = ft.AlertDialog(
             title=ft.Text(tr("delete")),
             content=ft.Text(tr("confirmDeletePlaylist").replace("{}", pname)),

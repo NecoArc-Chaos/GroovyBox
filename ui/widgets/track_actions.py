@@ -2,12 +2,14 @@
 
 import os
 import shutil
+
 import flet as ft
+
+from data import playlist_repository as prepo
+from data import track_repository as trepo
+from data.db import get_app_dir
 from logic.localize import tr
 from logic.metadata_service import format_duration
-from data import track_repository as trepo
-from data import playlist_repository as prepo
-from data.db import get_app_dir
 
 
 def show_track_details(page, track):
@@ -45,12 +47,14 @@ def show_edit_dialog(page, track, on_saved=None):
 
     def _build_cover_content(src):
         if src:
-            return ft.Image(src=src, fit=ft.BoxFit.COVER,
-                error_content=ft.Icon(ft.Icons.ALBUM, size=48, color=ft.Colors.WHITE54))
+            return ft.Image(
+                src=src, fit=ft.BoxFit.COVER, error_content=ft.Icon(ft.Icons.ALBUM, size=48, color=ft.Colors.WHITE54)
+            )
         return ft.Icon(ft.Icons.ALBUM, size=48, color=ft.Colors.WHITE54)
 
     cover_img = ft.Container(
-        width=120, height=120,
+        width=120,
+        height=120,
         border_radius=12,
         clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
         content=_build_cover_content(track.art_uri),
@@ -59,6 +63,7 @@ def show_edit_dialog(page, track, on_saved=None):
 
     async def pick_cover(_):
         from logic.file_dialog import pick_files
+
         paths = await pick_files(page, tr("importCover"), ["jpg", "jpeg", "png", "webp", "bmp"], allow_multiple=False)
         if not paths:
             return
@@ -86,14 +91,23 @@ def show_edit_dialog(page, track, on_saved=None):
 
     dlg = ft.AlertDialog(
         title=ft.Text(tr("editMetadata")),
-        content=ft.Column(tight=True, width=320, controls=[
-            ft.Row(alignment=ft.MainAxisAlignment.CENTER, controls=[cover_img]),
-            ft.Row(alignment=ft.MainAxisAlignment.CENTER, controls=[
-                ft.TextButton(tr("changeCover"), on_click=lambda e: page.run_task(pick_cover, e)),
-                ft.TextButton(tr("removeCover"), on_click=remove_cover),
-            ]),
-            tf, af, alf,
-        ]),
+        content=ft.Column(
+            tight=True,
+            width=320,
+            controls=[
+                ft.Row(alignment=ft.MainAxisAlignment.CENTER, controls=[cover_img]),
+                ft.Row(
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    controls=[
+                        ft.TextButton(tr("changeCover"), on_click=lambda e: page.run_task(pick_cover, e)),
+                        ft.TextButton(tr("removeCover"), on_click=remove_cover),
+                    ],
+                ),
+                tf,
+                af,
+                alf,
+            ],
+        ),
         actions=[
             ft.TextButton(tr("cancel"), on_click=lambda e: page.pop_dialog()),
             ft.FilledButton(tr("save"), on_click=save),
@@ -130,6 +144,8 @@ def _detail_row(label, value):
         tight=True,
         controls=[
             ft.Container(width=100, content=ft.Text(label + ":", weight=ft.FontWeight.BOLD)),
-            ft.Container(expand=True, content=ft.Text(str(value), color=ft.Colors.with_opacity(0.7, ft.Colors.ON_SURFACE))),
+            ft.Container(
+                expand=True, content=ft.Text(str(value), color=ft.Colors.with_opacity(0.7, ft.Colors.ON_SURFACE))
+            ),
         ],
     )

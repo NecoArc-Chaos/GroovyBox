@@ -5,17 +5,18 @@ using the watchdog library. When files are added, modified, or removed,
 the scanner automatically updates the track database.
 """
 
+import asyncio
 import os
 import threading
-import asyncio
-from typing import Dict, Optional, Set
+
 from data import track_repository as trepo
 from logic.logger import logger
 from logic.metadata_service import get_metadata
 
 try:
+    from watchdog.events import FileSystemEvent, FileSystemEventHandler
     from watchdog.observers import Observer
-    from watchdog.events import FileSystemEventHandler, FileSystemEvent
+
     _HAS_WATCHDOG = True
 except ImportError:
     _HAS_WATCHDOG = False
@@ -28,7 +29,7 @@ if _HAS_WATCHDOG:
 
         def __init__(self, scanner: "WatchScanner"):
             self._scanner = scanner
-            self._loop: Optional[asyncio.AbstractEventLoop] = None
+            self._loop: asyncio.AbstractEventLoop | None = None
 
         def set_loop(self, loop: asyncio.AbstractEventLoop):
             self._loop = loop
@@ -88,10 +89,10 @@ class WatchScanner:
     """
 
     def __init__(self):
-        self._observer: Optional[Observer] = None
-        self._handler: Optional[_TrackChangeHandler] = None
-        self._watched_paths: Dict[str, Set[str]] = {}
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._observer: Observer | None = None
+        self._handler: _TrackChangeHandler | None = None
+        self._watched_paths: dict[str, set[str]] = {}
+        self._loop: asyncio.AbstractEventLoop | None = None
         self._lock = threading.Lock()
 
     def set_loop(self, loop: asyncio.AbstractEventLoop):

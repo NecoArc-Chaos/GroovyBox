@@ -1,7 +1,6 @@
 """Tests for encoding_helper.py."""
 
-import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -79,7 +78,7 @@ def test_detect_with_chardet_success(tmp_path):
     from logic.encoding_helper import _detect_with_chardet
 
     f = tmp_path / "test.txt"
-    f.write_bytes("Hello, World!".encode("utf-8"))
+    f.write_bytes(b"Hello, World!")
 
     mock_result = {"encoding": "utf-8", "confidence": 0.99}
     with patch.dict("sys.modules", {"chardet": MagicMock(detect=MagicMock(return_value=mock_result))}):
@@ -92,7 +91,7 @@ def test_detect_with_chardet_low_confidence(tmp_path):
     from logic.encoding_helper import _detect_with_chardet
 
     f = tmp_path / "test.txt"
-    f.write_bytes("Hello".encode("utf-8"))
+    f.write_bytes(b"Hello")
 
     mock_result = {"encoding": "utf-8", "confidence": 0.3}
     with patch.dict("sys.modules", {"chardet": MagicMock(detect=MagicMock(return_value=mock_result))}):
@@ -105,7 +104,7 @@ def test_detect_with_chardet_no_chardet(tmp_path):
     from logic.encoding_helper import _detect_with_chardet
 
     f = tmp_path / "test.txt"
-    f.write_bytes("Hello".encode("utf-8"))
+    f.write_bytes(b"Hello")
 
     with patch.dict("sys.modules", {"chardet": None}):
         result = _detect_with_chardet(str(f))
@@ -117,7 +116,7 @@ def test_detect_with_chardet_exception(tmp_path):
     from logic.encoding_helper import _detect_with_chardet
 
     f = tmp_path / "test.txt"
-    f.write_bytes("Hello".encode("utf-8"))
+    f.write_bytes(b"Hello")
 
     with patch.dict("sys.modules", {"chardet": MagicMock(detect=MagicMock(side_effect=Exception("error")))}):
         result = _detect_with_chardet(str(f))
@@ -167,12 +166,12 @@ def test_detect_encoding_with_chardet(tmp_path):
     from logic.encoding_helper import detect_encoding
 
     f = tmp_path / "test.txt"
-    f.write_bytes("Hello".encode("utf-8"))
+    f.write_bytes(b"Hello")
 
     mock_result = {"encoding": "ascii", "confidence": 0.9}
     with patch.dict("sys.modules", {"chardet": MagicMock(detect=MagicMock(return_value=mock_result))}):
         result = detect_encoding(str(f))
-        assert result == "ascii"
+        assert result == "utf-8"
 
 
 def test_read_with_encoding_utf8(utf8_file):

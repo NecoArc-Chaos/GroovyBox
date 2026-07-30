@@ -1,9 +1,11 @@
 """Tests for play mode logic."""
 
-import pytest
 from unittest.mock import MagicMock
-from logic.play_mode import cycle_play_mode, get_play_mode_icon, _PLAY_MODE_CYCLE
+
 import flet as ft
+import pytest
+
+from logic.play_mode import cycle_play_mode, get_play_mode_icon
 
 
 @pytest.fixture

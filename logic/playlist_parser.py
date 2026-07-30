@@ -7,10 +7,9 @@ resolves relative paths against the playlist file's directory.
 
 import os
 import re
-from typing import List
 
 
-def parse_m3u(path: str) -> List[str]:
+def parse_m3u(path: str) -> list[str]:
     """Parse an M3U/M3U8 playlist file and return audio file paths.
 
     Reads the playlist file, skips comments (lines starting with #),
@@ -22,10 +21,12 @@ def parse_m3u(path: str) -> List[str]:
     Returns:
         List of absolute paths to audio files that exist on disk.
     """
+    if not os.path.isfile(path):
+        return []
     # Try multiple encodings to read the file
     for enc in ["utf-8-sig", "utf-8", "gbk", "latin-1"]:
         try:
-            with open(path, "r", encoding=enc) as f:
+            with open(path, encoding=enc) as f:
                 lines = f.readlines()
             break
         except (UnicodeDecodeError, UnicodeError):
@@ -50,7 +51,7 @@ def parse_m3u(path: str) -> List[str]:
     return result
 
 
-def parse_pls(path: str) -> List[str]:
+def parse_pls(path: str) -> list[str]:
     """Parse a PLS playlist file and return audio file paths.
 
     Reads the playlist file using format: FileN=path/to/audio.mp3
@@ -61,10 +62,12 @@ def parse_pls(path: str) -> List[str]:
     Returns:
         List of absolute paths to audio files that exist on disk.
     """
+    if not os.path.isfile(path):
+        return []
     # Try multiple encodings
     for enc in ["utf-8-sig", "utf-8", "gbk", "latin-1"]:
         try:
-            with open(path, "r", encoding=enc) as f:
+            with open(path, encoding=enc) as f:
                 content = f.read()
             break
         except (UnicodeDecodeError, UnicodeError):
@@ -86,7 +89,7 @@ def parse_pls(path: str) -> List[str]:
     return result
 
 
-def parse_playlist(path: str) -> List[str]:
+def parse_playlist(path: str) -> list[str]:
     """Parse a playlist file and return audio file paths.
 
     Automatically detects the format based on file extension:

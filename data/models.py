@@ -6,7 +6,6 @@ and various intermediate data structures for lyrics and metadata.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
@@ -27,18 +26,19 @@ class Track:
         added_at: Timestamp when the track was added to the library.
         last_checked: ISO timestamp of last missing-file check (optional).
     """
+
     id: int = 0
     title: str = ""
-    artist: Optional[str] = None
-    album: Optional[str] = None
-    duration: Optional[int] = None
+    artist: str | None = None
+    album: str | None = None
+    duration: int | None = None
     path: str = ""
-    art_uri: Optional[str] = None
-    art_thumb: Optional[bytes] = None
-    lyrics: Optional[str] = None
+    art_uri: str | None = None
+    art_thumb: bytes | None = None
+    lyrics: str | None = None
     lyrics_offset: int = 0
     added_at: str = ""
-    last_checked: Optional[str] = None
+    last_checked: str | None = None
 
 
 @dataclass
@@ -50,6 +50,7 @@ class Playlist:
         name: Display name of the playlist.
         created_at: Timestamp when the playlist was created.
     """
+
     id: int = 0
     name: str = ""
     created_at: str = ""
@@ -64,9 +65,10 @@ class AlbumData:
         artist: Primary artist name.
         art_uri: Path to the album cover image (optional).
     """
+
     album: str = ""
     artist: str = ""
-    art_uri: Optional[str] = None
+    art_uri: str | None = None
 
 
 @dataclass
@@ -78,6 +80,7 @@ class ArtistAlbums:
         albums: List of AlbumData objects belonging to this artist.
         track_count: Total number of tracks by this artist with albums.
     """
+
     artist: str = ""
     albums: list = field(default_factory=list)
     track_count: int = 0
@@ -96,13 +99,14 @@ class WatchFolder:
         added_at: Timestamp when the folder was added.
         last_scanned: Timestamp of the last scan operation.
     """
+
     id: int = 0
     path: str = ""
     name: str = ""
     is_active: bool = True
     recursive: bool = True
     added_at: str = ""
-    last_scanned: Optional[str] = None
+    last_scanned: str | None = None
 
 
 @dataclass
@@ -115,6 +119,7 @@ class SettingsState:
         lyrics_mode: Lyrics display mode (auto/curved/flat).
         continue_plays: Whether to continue playing when the queue ends.
     """
+
     auto_scan: bool = True
     default_player_screen: str = "cover"
     lyrics_mode: str = "auto"
@@ -138,13 +143,14 @@ class CurrentTrackData:
         lyrics: JSON lyrics data (optional).
         lyrics_offset: Lyrics sync offset in milliseconds.
     """
+
     id: int = 0
     title: str = ""
-    artist: Optional[str] = None
-    album: Optional[str] = None
+    artist: str | None = None
+    album: str | None = None
     path: str = ""
-    art_uri: Optional[str] = None
-    lyrics: Optional[str] = None
+    art_uri: str | None = None
+    lyrics: str | None = None
     lyrics_offset: int = 0
 
 
@@ -159,11 +165,12 @@ class TrackMetadata:
         duration: Track duration in milliseconds.
         art_bytes: Raw bytes of the embedded album art image.
     """
-    title: Optional[str] = None
-    artist: Optional[str] = None
-    album: Optional[str] = None
-    duration: Optional[int] = None
-    art_bytes: Optional[bytes] = None
+
+    title: str | None = None
+    artist: str | None = None
+    album: str | None = None
+    duration: int | None = None
+    art_bytes: bytes | None = None
 
 
 @dataclass
@@ -174,7 +181,8 @@ class LyricsLine:
         time_ms: Timestamp in milliseconds (None for unsynchronized lyrics).
         text: The lyrics text content.
     """
-    time_ms: Optional[int] = None
+
+    time_ms: int | None = None
     text: str = ""
 
 
@@ -186,5 +194,6 @@ class LyricsData:
         type: Lyrics format type - "timed" for synchronized, "plain" for static.
         lines: List of LyricsLine objects containing the lyrics content.
     """
+
     type: str = "plain"
     lines: list = field(default_factory=list)

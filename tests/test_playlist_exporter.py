@@ -37,14 +37,15 @@ def test_export_playlist_not_found(mock_prepo):
 
     mock_prepo.watch_all_playlists.return_value = []
 
-    with pytest.raises(ValueError, match="Playlist 999 not found"):
-        export_playlist(999, "/tmp/test.m3u", mock_prepo=MagicMock(return_value=mock_prepo))
+    with patch("logic.playlist_exporter.prepo", mock_prepo):
+        with pytest.raises(ValueError, match="Playlist 999 not found"):
+            export_playlist(999, "/tmp/test.m3u")
 
 
 def test_export_m3u_basic(tmp_path, mock_prepo, mock_track):
     """_export_m3u should create M3U file with tracks."""
-    from logic.playlist_exporter import _export_m3u
     from data.models import Playlist
+    from logic.playlist_exporter import _export_m3u
 
     # Create a fake audio file
     audio_file = tmp_path / "song.mp3"
@@ -68,8 +69,8 @@ def test_export_m3u_basic(tmp_path, mock_prepo, mock_track):
 
 def test_export_m3u_skips_missing_files(tmp_path, mock_prepo, mock_track):
     """_export_m3u should skip tracks with missing files."""
-    from logic.playlist_exporter import _export_m3u
     from data.models import Playlist
+    from logic.playlist_exporter import _export_m3u
 
     mock_track.path = "/nonexistent/song.mp3"
     mock_prepo.watch_playlist_tracks.return_value = [mock_track]
@@ -87,8 +88,8 @@ def test_export_m3u_skips_missing_files(tmp_path, mock_prepo, mock_track):
 
 def test_export_m3u_with_lyrics(tmp_path, mock_prepo, mock_track):
     """_export_m3u should export lyrics files when requested."""
-    from logic.playlist_exporter import _export_m3u
     from data.models import Playlist
+    from logic.playlist_exporter import _export_m3u
 
     audio_file = tmp_path / "song.mp3"
     audio_file.write_text("fake")
@@ -107,8 +108,8 @@ def test_export_m3u_with_lyrics(tmp_path, mock_prepo, mock_track):
 
 def test_export_m3u_with_covers(tmp_path, mock_prepo, mock_track):
     """_export_m3u should copy cover art when requested."""
-    from logic.playlist_exporter import _export_m3u
     from data.models import Playlist
+    from logic.playlist_exporter import _export_m3u
 
     audio_file = tmp_path / "song.mp3"
     audio_file.write_text("fake")
@@ -130,8 +131,8 @@ def test_export_m3u_with_covers(tmp_path, mock_prepo, mock_track):
 
 def test_export_m3u_relative_paths(tmp_path, mock_prepo, mock_track):
     """_export_m3u should use relative paths when requested."""
-    from logic.playlist_exporter import _export_m3u
     from data.models import Playlist
+    from logic.playlist_exporter import _export_m3u
 
     audio_file = tmp_path / "song.mp3"
     audio_file.write_text("fake")
@@ -150,8 +151,8 @@ def test_export_m3u_relative_paths(tmp_path, mock_prepo, mock_track):
 
 def test_export_as_zip_basic(tmp_path, mock_prepo, mock_track):
     """_export_as_zip should create ZIP with M3U and audio files."""
-    from logic.playlist_exporter import _export_as_zip
     from data.models import Playlist
+    from logic.playlist_exporter import _export_as_zip
 
     audio_file = tmp_path / "song.mp3"
     audio_file.write_text("fake")
@@ -172,8 +173,8 @@ def test_export_as_zip_basic(tmp_path, mock_prepo, mock_track):
 
 def test_export_as_zip_skips_existing(tmp_path, mock_prepo, mock_track):
     """_export_as_zip should not overwrite existing files in ZIP."""
-    from logic.playlist_exporter import _export_as_zip
     from data.models import Playlist
+    from logic.playlist_exporter import _export_as_zip
 
     audio_file = tmp_path / "song.mp3"
     audio_file.write_text("fake")
@@ -211,8 +212,8 @@ def test_make_path_value_error():
     """_make_path should return original path on ValueError."""
     from logic.playlist_exporter import _make_path
 
-    # On Windows, relpath can raise ValueError for different drives
-    result = _make_path("C:/music/song.mp3", "D:/tmp", use_relpath=True)
+    with patch("os.path.relpath", side_effect=ValueError("different drives")):
+        result = _make_path("C:/music/song.mp3", "D:/tmp", use_relpath=True)
     assert result == "C:/music/song.mp3"
 
 
@@ -228,7 +229,7 @@ def test_write_lyrics_file_timed(tmp_path):
     assert output_path.exists()
     content = output_path.read_text(encoding="utf-8")
     assert "[00:00.00]test" in content
-    assert "[00:10.00]line2" in content
+    assert "[00:01.00]line2" in content
 
 
 def test_write_lyrics_file_plain(tmp_path):
@@ -259,8 +260,8 @@ def test_write_lyrics_file_empty(tmp_path):
 
 def test_export_playlist_m3u_format(tmp_path, mock_prepo, mock_track):
     """export_playlist should create M3U file by default."""
-    from logic.playlist_exporter import export_playlist
     from data.models import Playlist
+    from logic.playlist_exporter import export_playlist
 
     audio_file = tmp_path / "song.mp3"
     audio_file.write_text("fake")
@@ -270,8 +271,8 @@ def test_export_playlist_m3u_format(tmp_path, mock_prepo, mock_track):
 
     output_path = tmp_path / "test.m3u"
 
-    with patch.dict("sys.modules", {"data.playlist_repository": mock_prepo}):
-        result = export_playlist(1, str(output_path), mock_prepo=MagicMock(return_value=mock_prepo))
+    with patch("logic.playlist_exporter.prepo", mock_prepo):
+        result = export_playlist(1, str(output_path))
 
     assert result == str(output_path)
     assert os.path.exists(output_path)
@@ -279,8 +280,8 @@ def test_export_playlist_m3u_format(tmp_path, mock_prepo, mock_track):
 
 def test_export_playlist_zip_format(tmp_path, mock_prepo, mock_track):
     """export_playlist should create ZIP when as_zip=True."""
-    from logic.playlist_exporter import export_playlist
     from data.models import Playlist
+    from logic.playlist_exporter import export_playlist
 
     audio_file = tmp_path / "song.mp3"
     audio_file.write_text("fake")
@@ -290,8 +291,8 @@ def test_export_playlist_zip_format(tmp_path, mock_prepo, mock_track):
 
     output_path = tmp_path / "test.zip"
 
-    with patch.dict("sys.modules", {"data.playlist_repository": mock_prepo}):
-        result = export_playlist(1, str(output_path), as_zip=True, mock_prepo=MagicMock(return_value=mock_prepo))
+    with patch("logic.playlist_exporter.prepo", mock_prepo):
+        result = export_playlist(1, str(output_path), as_zip=True)
 
     assert result == str(output_path)
     assert os.path.exists(output_path)

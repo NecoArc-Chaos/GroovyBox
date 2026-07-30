@@ -11,7 +11,6 @@ be added to page.overlay.
 """
 
 import logging
-from typing import Optional, List
 
 from flet import FilePicker, FilePickerFileType
 
@@ -20,7 +19,7 @@ logger = logging.getLogger("flet")
 
 def _get_picker(page) -> FilePicker:
     """Return the pre-created FilePicker instance, creating one as fallback."""
-    picker = getattr(page, '_file_picker', None)
+    picker = getattr(page, "_file_picker", None)
     if picker is None:
         picker = FilePicker()
         page._file_picker = picker
@@ -31,9 +30,9 @@ def _get_picker(page) -> FilePicker:
 async def pick_files(
     page,
     title: str = "Select files",
-    extensions: Optional[List[str]] = None,
+    extensions: list[str] | None = None,
     allow_multiple: bool = True,
-) -> Optional[List[str]]:
+) -> list[str] | None:
     """Open a file picker dialog for selecting files.
 
     Args:
@@ -63,7 +62,7 @@ async def pick_files(
 async def pick_directory(
     page,
     title: str = "Select folder",
-) -> Optional[str]:
+) -> str | None:
     """Open a directory picker dialog.
 
     Args:
@@ -85,9 +84,9 @@ async def save_file(
     page,
     title: str = "Save file",
     default_name: str = "file",
-    extensions: Optional[List[str]] = None,
-    src_bytes: Optional[bytes] = None,
-) -> Optional[str]:
+    extensions: list[str] | None = None,
+    src_bytes: bytes | None = None,
+) -> str | None:
     """Open a save file dialog and optionally write content.
 
     On iOS/Android/Web, src_bytes is required. When provided, the

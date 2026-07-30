@@ -1,9 +1,11 @@
 """Tests for library screen logic."""
 
-import pytest
 from unittest.mock import MagicMock, patch
-from ui.screens.library_screen import LibraryScreen
+
+import pytest
+
 from data.models import Track
+from ui.screens.library_screen import LibraryScreen
 
 
 @pytest.fixture
@@ -14,13 +16,14 @@ def mock_page():
     return page
 
 
-def _make_track(tid, title="Song", artist="Artist", album="Album", path="/music/song.mp3"):
+def _make_track(tid, title="Song", artist="Artist", album="Album", path="/music/song.mp3", duration=180000):
     t = MagicMock()
     t.id = tid
     t.title = title
     t.artist = artist
     t.album = album
     t.path = path
+    t.duration = duration
     return t
 
 
@@ -193,24 +196,25 @@ def test_build_track_tiles_without_missing_set(mock_page):
 def test_search_debounce_cancels_previous(mock_page):
     """_search_debounce should cancel previous timer."""
     screen = LibraryScreen(mock_page)
-    screen._search_timer = MagicMock()
+    old_timer = MagicMock()
+    screen._search_timer = old_timer
     screen._search_debounce()
-    screen._search_timer.cancel.assert_called_once()
+    old_timer.cancel.assert_called_once()
 
 
 def test_on_search_change_updates_query(mock_page):
-    """on_search_change should update search_query."""
+    """_on_search_change should update search_query."""
     screen = LibraryScreen(mock_page)
     screen._build = MagicMock()
     screen.update = MagicMock()
 
     event = MagicMock()
     event.control.value = "test query"
-    screen._on_search_change(event)
+    with patch.object(screen, "_search_debounce") as mock_debounce:
+        screen._on_search_change(event)
 
     assert screen.search_query == "test query"
-    screen._build.assert_called_once()
-    screen.update.assert_called_once()
+    mock_debounce.assert_called_once()
 
 
 def test_toggle_select_enters_selection_mode(mock_page):

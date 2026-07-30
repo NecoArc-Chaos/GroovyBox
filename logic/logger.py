@@ -1,9 +1,7 @@
-"""Logging Module for GroovyBox.
-"""
+"""Logging Module for GroovyBox."""
 
 import logging
 from collections import deque
-
 
 _MAX_LOG_LINES = 5000
 
@@ -32,9 +30,7 @@ def _setup_logger():
     logger = logging.getLogger("GroovyBox")
     logger.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter(
-        "[%(asctime)s] %(levelname)s - %(message)s", datefmt="%H:%M:%S"
-    )
+    formatter = logging.Formatter("[%(asctime)s] %(levelname)s - %(message)s", datefmt="%H:%M:%S")
 
     ch = logging.StreamHandler()
     ch.setFormatter(formatter)

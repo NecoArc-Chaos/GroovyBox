@@ -6,14 +6,23 @@ mutagen library for cross-format metadata support.
 """
 
 import os
-from typing import Optional
+
 from mutagen import File as MutagenFile
+
 from data.models import TrackMetadata
 from logic.logger import logger
 
 # Supported audio file extensions for metadata extraction
 SUPPORTED_EXTENSIONS = {
-    '.mp3', '.m4a', '.wav', '.flac', '.aac', '.ogg', '.wma', '.opus', '.aiff',
+    ".mp3",
+    ".m4a",
+    ".wav",
+    ".flac",
+    ".aac",
+    ".ogg",
+    ".wma",
+    ".opus",
+    ".aiff",
 }
 
 
@@ -57,7 +66,7 @@ def get_metadata(file_path: str) -> TrackMetadata:
     return meta
 
 
-def _safe_tag(audio, key: str) -> Optional[str]:
+def _safe_tag(audio, key: str) -> str | None:
     """Safely extract a tag value from an audio file.
 
     Handles various tag formats (single value, list) and
@@ -81,7 +90,7 @@ def _safe_tag(audio, key: str) -> Optional[str]:
     return None
 
 
-def _extract_art(audio) -> Optional[bytes]:
+def _extract_art(audio) -> bytes | None:
     """Extract embedded album art from an audio file.
 
     Supports multiple formats:
@@ -119,7 +128,7 @@ def _extract_art(audio) -> Optional[bytes]:
     return None
 
 
-def format_duration(duration_ms: Optional[int]) -> str:
+def format_duration(duration_ms: int | None) -> str:
     """Format a duration in milliseconds to a human-readable string.
 
     Args:

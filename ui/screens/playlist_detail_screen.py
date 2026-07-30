@@ -5,12 +5,14 @@ the playlist name, action buttons, and a list of tracks in the playlist.
 Supports playing, queuing, and exporting playlists.
 """
 
-import flet as ft
 import os
+
+import flet as ft
+
+from data import db
 from data import playlist_repository as prepo
 from logic.localize import tr
 from logic.logger import logger
-from data import db
 from ui.widgets.track_tile import TrackTile
 
 
@@ -57,9 +59,7 @@ class PlaylistDetailView(ft.Container):
             self._tracks.sort(key=self._sort_func, reverse=self._reverse_sort)
 
         self._track_list = ft.ReorderableListView(
-            spacing=4,
-            on_reorder=self._on_reorder,
-            controls=self._build_track_controls(self._tracks)
+            spacing=4, on_reorder=self._on_reorder, controls=self._build_track_controls(self._tracks)
         )
 
         self.content = ft.Column(
@@ -241,6 +241,7 @@ class PlaylistDetailView(ft.Container):
                 self._tracks.sort(key=key_func, reverse=reverse)
                 prepo.set_playlist_track_order(self.playlist.id, [t.id for t in self._tracks])
                 self._rebuild_track_list()
+
             return ft.PopupMenuItem(content=ft.Text(label), on_click=handler)
 
         def make_reset():
@@ -250,6 +251,7 @@ class PlaylistDetailView(ft.Container):
                 self._tracks = prepo.watch_playlist_tracks(self.playlist.id)
                 prepo.set_playlist_track_order(self.playlist.id, [t.id for t in self._tracks])
                 self._rebuild_track_list()
+
             return ft.PopupMenuItem(content=ft.Text(tr("sortDefault")), on_click=handler)
 
         def make_reverse():
@@ -258,6 +260,7 @@ class PlaylistDetailView(ft.Container):
                 self._tracks.reverse()
                 prepo.set_playlist_track_order(self.playlist.id, [t.id for t in self._tracks])
                 self._rebuild_track_list()
+
             return ft.PopupMenuItem(content=ft.Text(tr("reverseOrder")), on_click=handler)
 
         return [
@@ -305,6 +308,7 @@ class PlaylistDetailView(ft.Container):
         async def do_export(e):
             """Export to temp file, then save via file picker."""
             import tempfile
+
             from logic.file_dialog import save_file
             from logic.playlist_exporter import export_playlist
 
@@ -324,7 +328,8 @@ class PlaylistDetailView(ft.Container):
                 )
                 with open(out, "rb") as f:
                     file_bytes = f.read()
-                saved = await save_file(self._page,
+                saved = await save_file(
+                    self._page,
                     title=tr("export"),
                     default_name=f"{self.playlist.name or 'playlist'}{suffix}",
                     extensions=["zip" if as_zip_cb.value else "m3u"],
@@ -344,7 +349,8 @@ class PlaylistDetailView(ft.Container):
         dlg = ft.AlertDialog(
             title=ft.Text(tr("export")),
             content=ft.Column(
-                tight=True, width=320,
+                tight=True,
+                width=320,
                 controls=[
                     use_relpath_cb,
                     include_lyrics_cb,

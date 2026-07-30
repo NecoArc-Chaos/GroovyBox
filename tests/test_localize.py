@@ -1,7 +1,8 @@
 """Tests for localization module."""
 
 import pytest
-from logic.localize import tr, load_locale, get_locale, _strings
+
+from logic.localize import get_locale, load_locale, tr
 
 
 @pytest.fixture(autouse=True)

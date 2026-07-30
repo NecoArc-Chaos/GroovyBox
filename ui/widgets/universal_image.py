@@ -5,9 +5,9 @@ images from various sources (local files, network URLs) with automatic
 fallback to an icon when the image cannot be loaded.
 """
 
-import flet as ft
 import os
-from typing import Optional
+
+import flet as ft
 
 
 class UniversalImage(ft.Container):
@@ -27,10 +27,10 @@ class UniversalImage(ft.Container):
 
     def __init__(
         self,
-        uri: Optional[str] = None,
-        width: Optional[float] = None,
-        height: Optional[float] = None,
-        border_radius: Optional[float] = None,
+        uri: str | None = None,
+        width: float | None = None,
+        height: float | None = None,
+        border_radius: float | None = None,
         fit: ft.BoxFit = ft.BoxFit.COVER,
         fallback_icon: str = ft.Icons.IMAGE,
         fallback_icon_size: float = 48,

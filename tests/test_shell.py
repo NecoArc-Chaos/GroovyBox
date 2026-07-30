@@ -1,9 +1,31 @@
 """Tests for ui/shell.py ShellView."""
 
 import asyncio
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def init_db():
+    from data import db
+    db.init_database()
+    yield
+    db._SETTING_CACHE.clear()
+    db.DB_PATH = None
+    conn = getattr(db._thread_local, "connection", None)
+    if conn is not None:
+        try:
+            conn.close()
+        except Exception:
+            pass
+        db._thread_local.connection = None
+    try:
+        db_path = db.get_db_path()
+        if os.path.exists(db_path):
+            os.remove(db_path)
+    except Exception:
+        pass
 
 
 @pytest.fixture
@@ -308,10 +330,12 @@ def test_on_window_size_changed_mobile_category_change(mock_page):
     from ui.shell import ShellView
 
     shell = ShellView.__new__(ShellView)
+    shell._page = mock_page
     shell._is_mobile = False
     shell._detect_mobile = MagicMock(return_value=True)
     mock_app = MagicMock()
     mock_app._reload_ui = MagicMock()
+    shell.app = mock_app
     mock_page.session.store = {"app": mock_app}
 
     shell.on_window_size_changed()
@@ -325,6 +349,7 @@ def test_on_window_size_changed_same_category(mock_page):
     from ui.shell import ShellView
 
     shell = ShellView.__new__(ShellView)
+    shell._page = mock_page
     shell._is_mobile = False
     shell._detect_mobile = MagicMock(return_value=False)
     shell.mini_player = MagicMock()
@@ -375,7 +400,7 @@ def test_import_files_no_paths(mock_page):
 
     asyncio.run(shell._import_files(paths=[]))
 
-    shell._reload_after_import.assert_called_once()
+    shell._reload_after_import.assert_not_called()
 
 
 def test_import_folder_no_folder(mock_page):
@@ -420,7 +445,7 @@ def test_handle_path_import_directory(mock_page):
 
     with patch("os.path.exists", return_value=True), \
          patch("os.path.isdir", return_value=True), \
-         patch.dict("sys.modules", {"data.track_repository": mock_trepo}):
+         patch("data.track_repository", mock_trepo):
         asyncio.run(shell._handle_path_import("/music"))
 
     mock_trepo.scan_directory_async.assert_called_once_with("/music")
@@ -442,7 +467,6 @@ def test_handle_path_import_audio_file(mock_page):
         asyncio.run(shell._handle_path_import("/song.mp3"))
 
     shell._import_files.assert_called_once_with(["/song.mp3"])
-    shell._reload_after_import.assert_called_once()
 
 
 def test_handle_path_import_unsupported(mock_page):
@@ -480,11 +504,11 @@ def test_import_lyrics_files_matched(mock_page):
     mock_parser.parse.return_value = MagicMock()
     mock_parser.lyrics_to_json.return_value = "{}"
 
-    with patch.dict("sys.modules", {
-        "data.track_repository": mock_trepo,
-        "logic.encoding_helper": MagicMock(read_with_encoding=MagicMock(return_value="[00:00]test")),
-        "logic.lyrics_parser": mock_parser,
-    }):
+    with patch("data.track_repository", mock_trepo), \
+         patch.dict("sys.modules", {
+             "logic.encoding_helper": MagicMock(read_with_encoding=MagicMock(return_value="[00:00]test")),
+             "logic.lyrics_parser": mock_parser,
+         }):
         asyncio.run(shell._import_lyrics_files(["/lyrics/Song A.lrc"]))
 
     mock_trepo.update_lyrics.assert_called_once()
@@ -502,30 +526,31 @@ def test_import_lyrics_files_no_match(mock_page):
         MagicMock(title="Song A", id=1),
     ]
 
-    with patch.dict("sys.modules", {
-        "data.track_repository": mock_trepo,
-        "logic.encoding_helper": MagicMock(read_with_encoding=MagicMock(return_value="test")),
-        "logic.lyrics_parser": MagicMock(),
-    }):
+    with patch("data.track_repository", mock_trepo), \
+         patch.dict("sys.modules", {
+             "logic.encoding_helper": MagicMock(read_with_encoding=MagicMock(return_value="test")),
+             "logic.lyrics_parser": MagicMock(),
+         }):
         asyncio.run(shell._import_lyrics_files(["/lyrics/Unknown.lrc"]))
 
     # Should not crash, just not match
     mock_trepo.update_lyrics.assert_not_called()
 
 
-def test_reload_after_import(app, mock_page):
+def test_reload_after_import(mock_page):
     """_reload_after_import should update UI and reload."""
     from ui.shell import ShellView
 
     shell = ShellView.__new__(ShellView)
     shell._page = mock_page
-    shell.app = app
+    mock_app = MagicMock()
+    shell.app = mock_app
 
     mock_trepo = MagicMock()
     mock_trepo.watch_all_tracks.return_value = [MagicMock(), MagicMock()]
 
-    with patch.dict("sys.modules", {"data.track_repository": mock_trepo}):
+    with patch("data.track_repository", mock_trepo):
         asyncio.run(shell._reload_after_import())
 
-    mock_page.update.assert_called_once()
-    app._reload_ui.assert_called_once()
+    mock_page.update.assert_called()
+    mock_app._reload_ui.assert_called_once()

@@ -3,14 +3,13 @@
 import sys
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 
 def test_tray_manager_mobile_disabled():
     """SystemTrayManager should be disabled on mobile platforms."""
     with patch.object(sys, "platform", "android"):
         # Need to reload module to pick up the mobile platform
         import importlib
+
         import logic.tray_manager as tray_module
         importlib.reload(tray_module)
 
@@ -25,6 +24,7 @@ def test_tray_manager_no_pystray():
     with patch.object(sys, "platform", "win32"), \
          patch.dict("sys.modules", {"pystray": None, "PIL": None}):
         import importlib
+
         import logic.tray_manager as tray_module
         importlib.reload(tray_module)
 
@@ -43,6 +43,7 @@ def test_tray_manager_initialization_desktop():
              "PIL.Image": MagicMock(),
          }):
         import importlib
+
         import logic.tray_manager as tray_module
         importlib.reload(tray_module)
 
@@ -64,6 +65,7 @@ def test_tray_manager_run_not_running():
              "PIL.Image": MagicMock(),
          }):
         import importlib
+
         import logic.tray_manager as tray_module
         importlib.reload(tray_module)
 
@@ -90,6 +92,7 @@ def test_tray_manager_run_already_visible():
              "PIL.Image": MagicMock(),
          }):
         import importlib
+
         import logic.tray_manager as tray_module
         importlib.reload(tray_module)
 
@@ -116,6 +119,7 @@ def test_tray_manager_stop_running():
              "PIL.Image": MagicMock(),
          }):
         import importlib
+
         import logic.tray_manager as tray_module
         importlib.reload(tray_module)
 
@@ -141,6 +145,7 @@ def test_tray_manager_stop_not_running():
              "PIL.Image": MagicMock(),
          }):
         import importlib
+
         import logic.tray_manager as tray_module
         importlib.reload(tray_module)
 
@@ -161,6 +166,7 @@ def test_tray_manager_is_running_disabled():
     """is_running should return False when tray is disabled."""
     with patch.object(sys, "platform", "android"):
         import importlib
+
         import logic.tray_manager as tray_module
         importlib.reload(tray_module)
 
@@ -178,6 +184,7 @@ def test_tray_manager_is_running_no_icon():
              "PIL.Image": MagicMock(),
          }):
         import importlib
+
         import logic.tray_manager as tray_module
         importlib.reload(tray_module)
 
@@ -196,6 +203,7 @@ def test_tray_manager_is_running_true():
              "PIL.Image": MagicMock(),
          }):
         import importlib
+
         import logic.tray_manager as tray_module
         importlib.reload(tray_module)
 
@@ -219,6 +227,7 @@ def test_tray_manager_on_open():
              "PIL.Image": MagicMock(),
          }):
         import importlib
+
         import logic.tray_manager as tray_module
         importlib.reload(tray_module)
 
@@ -245,6 +254,7 @@ def test_tray_manager_on_quit():
              "PIL.Image": MagicMock(),
          }):
         import importlib
+
         import logic.tray_manager as tray_module
         importlib.reload(tray_module)
 
@@ -268,6 +278,7 @@ def test_tray_manager_on_quit_no_callback():
              "PIL.Image": MagicMock(),
          }):
         import importlib
+
         import logic.tray_manager as tray_module
         importlib.reload(tray_module)
 
@@ -289,6 +300,7 @@ def test_tray_manager_callbacks():
              "PIL.Image": MagicMock(),
          }):
         import importlib
+
         import logic.tray_manager as tray_module
         importlib.reload(tray_module)
 
